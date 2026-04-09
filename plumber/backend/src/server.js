@@ -2,7 +2,11 @@ const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
 const connectDB = require('./config/db');
+
+// Core internal routes
 const authRoutes = require('./routes/authRoutes');
+const plumberRoutes = require('./routes/plumberRoutes');
+const bookingRoutes = require('./routes/bookingRoutes');
 
 // Load env vars
 dotenv.config();
@@ -18,6 +22,8 @@ app.use(cors());
 
 // Mount routers
 app.use('/api/auth', authRoutes);
+app.use('/api/plumbers', plumberRoutes);
+app.use('/api/bookings', bookingRoutes);
 
 // Root route
 app.get('/', (req, res) => {

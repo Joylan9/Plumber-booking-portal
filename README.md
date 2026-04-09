@@ -1,4 +1,4 @@
-ÿþ<div align="center">
+<div align="center">
 
 <img src="https://img.icons8.com/color/124/pipeline.png" alt="Plumber Portal Logo"/>
 
@@ -38,7 +38,7 @@
 The **Premium Plumber Booking Portal** is a sophisticated, dual-ecosystem application. It dynamically supports independent workflows for both **Customers** (booking, tracking, managing) and **Professionals** (availability, service parsing) unified under an ultra-responsive, visually stunning UI.
 
 ### Key Objectives Achieved:
-1. **Uncompromised UI/UX:** Built cleanly upon standard Vanilla CSS executing deep logic variables (`--navy`, `--sky`, `--amber`avoiding utility-class clutter while achieving jaw-dropping parallax effects and page transitions.
+1. **Uncompromised UI/UX:** Built cleanly upon standard Vanilla CSS executing deep logic variables (`--navy`, `--sky`, `--amber`) avoiding utility-class clutter while achieving jaw-dropping parallax effects and page transitions.
 2. **Absolute Security Constraints:** Enterprise logic enforcing encrypted JWT allocations mapped conditionally against `Customer`, `Plumber`, and `Admin` Roles independently.
 3. **Smooth Scroll Engine:** Native injection of `Lenis` physics overriding browser-default jarring scrolls for silky, mathematical progression metrics universally.
 

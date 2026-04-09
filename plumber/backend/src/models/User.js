@@ -41,7 +41,7 @@ const userSchema = new mongoose.Schema({
     type: String,
   },
   experience: {
-    type: String,
+    type: Number,
   },
   hourlyRate: {
     type: Number,
@@ -53,6 +53,10 @@ const userSchema = new mongoose.Schema({
     type: String,
   },
   rating: {
+    type: Number,
+    default: 0,
+  },
+  totalReviews: {
     type: Number,
     default: 0,
   },

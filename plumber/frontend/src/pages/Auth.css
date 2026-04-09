@@ -1,0 +1,117 @@
+.auth-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: calc(100vh - 80px);
+    background-color: var(--surface);
+}
+
+/* Split Layout Aesthetics */
+.split-layout {
+    flex-direction: row;
+    padding: 0;
+    align-items: stretch;
+}
+
+.auth-hero-panel {
+    flex: 1;
+    display: none;
+    background: linear-gradient(135deg, #0A2540, #2E6DA4);
+    background-size: 200% 200%;
+    animation: gradientShift 6s ease infinite;
+    color: white;
+    position: relative;
+    overflow: hidden;
+}
+
+@media (min-width: 900px) {
+    .auth-hero-panel {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 60px;
+    }
+}
+
+.hero-branding h2 {
+    color: white;
+    font-size: 3.5rem;
+    margin-bottom: 20px;
+}
+
+.hero-branding p {
+    font-size: 1.2rem;
+    opacity: 0.9;
+}
+
+.auth-form-panel {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.auth-card {
+    width: 100%;
+    max-width: 480px;
+    padding: 40px;
+    text-align: center;
+}
+
+.auth-title {
+    font-size: 2rem;
+    margin-bottom: 8px;
+    color: var(--navy);
+}
+
+.auth-subtitle {
+    color: var(--steel-blue);
+    margin-bottom: 32px;
+    font-size: 0.95rem;
+}
+
+.auth-error {
+    background: #FDECEA;
+    border: 1px solid #E74C3C;
+    color: #C0392B;
+    padding: 12px;
+    border-radius: 6px;
+    margin-bottom: 24px;
+    font-size: 0.9rem;
+}
+
+.auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.form-group {
+    text-align: left;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+    color: var(--navy);
+    font-weight: 600;
+}
+
+.submit-btn {
+    margin-top: 12px;
+    width: 100%;
+    padding: 14px;
+}
+
+.auth-footer {
+    margin-top: 24px;
+    font-size: 0.9rem;
+    color: var(--navy);
+}
+
+.auth-footer a {
+    font-weight: 600;
+    margin-left: 4px;
+}

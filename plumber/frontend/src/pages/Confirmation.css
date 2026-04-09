@@ -1,0 +1,137 @@
+.confirmation-page {
+    padding: 60px 24px;
+    background-color: var(--mist);
+    min-height: calc(100vh - 80px);
+}
+
+.confirmation-container {
+    max-width: 600px;
+    margin: 0 auto;
+    animation: fadeIn 0.4s ease-out forwards;
+}
+
+.success-header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.success-icon {
+    width: 80px;
+    height: 80px;
+    background-color: var(--confirm-green);
+    color: white;
+    font-size: 3rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    margin: 0 auto 20px auto;
+    box-shadow: 0 4px 14px rgba(39, 174, 96, 0.3);
+}
+
+.success-header h2 {
+    font-size: 2.2rem;
+    color: var(--navy);
+    margin-bottom: 12px;
+}
+
+.success-header p {
+    color: var(--steel-blue);
+    font-size: 1.1rem;
+}
+
+.summary-card {
+    padding: 30px;
+    margin-bottom: 30px;
+}
+
+.summary-title {
+    font-size: 1.4rem;
+    margin-bottom: 24px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--sky);
+}
+
+.summary-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.summary-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.label {
+    font-weight: 600;
+    color: var(--navy);
+}
+
+.value {
+    color: var(--steel-blue);
+    text-align: right;
+}
+
+.status-pill {
+    background-color: rgba(245, 166, 35, 0.15); /* Amber light */
+    color: var(--amber-cta);
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+}
+
+.ref-id {
+    font-family: monospace;
+    background: #E2E8F0;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+.map-placeholder {
+    height: 200px;
+    background: #e2e8f0;
+    background-image: repeating-linear-gradient(45deg, #cbd5e1 25%, transparent 25%, transparent 75%, #cbd5e1 75%, #cbd5e1), repeating-linear-gradient(45deg, #cbd5e1 25%, #e2e8f0 25%, #e2e8f0 75%, #cbd5e1 75%, #cbd5e1);
+    background-position: 0 0, 10px 10px;
+    background-size: 20px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 40px;
+    position: relative;
+    overflow: hidden;
+}
+
+.map-overlay {
+    background: rgba(255,255,255,0.9);
+    padding: 20px;
+    border-radius: 8px;
+    text-align: center;
+    font-weight: 600;
+    color: var(--navy);
+}
+
+.map-icon {
+    font-size: 2rem;
+    display: block;
+    margin-bottom: 8px;
+}
+
+.confirmation-actions {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+}
+
+@media (max-width: 600px) {
+    .summary-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+    }
+    .value {
+        text-align: left;
+    }
+}

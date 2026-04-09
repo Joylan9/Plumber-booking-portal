@@ -1,0 +1,144 @@
+/* Professional Home Styles */
+
+.home-container {
+    width: 100%;
+}
+
+/* Hero Section */
+.hero-section {
+    background: linear-gradient(135deg, #0A2540, #2E6DA4, #0A2540);
+    background-size: 300% 300%;
+    animation: gradientShift 8s ease infinite;
+    padding: 120px 24px;
+    text-align: center;
+    color: #fff;
+    position: relative;
+    overflow: hidden;
+}
+
+/* For GSAP Parallax Targeting */
+.parallax-bg {
+    position: absolute;
+    top: -20%;
+    left: -10%;
+    width: 120%;
+    height: 140%;
+    background-image: radial-gradient(circle at center, rgba(255,255,255,0.05) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 1;
+}
+
+.hero-content {
+    max-width: 800px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 2;
+}
+
+.hero-title {
+    font-size: clamp(3rem, 7vw, 6rem);
+    line-height: 1.1;
+    margin-bottom: 24px;
+    color: #fff;
+}
+
+.hero-title span {
+    color: var(--sky);
+}
+
+.hero-description {
+    font-size: 1.1rem;
+    color: #E2E8F0;
+    margin-bottom: 40px;
+    line-height: 1.6;
+}
+
+.hero-actions {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+}
+
+/* Trust Badges */
+.trust-badges {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    padding: 30px 24px;
+    background-color: var(--navy);
+    color: #fff;
+    flex-wrap: wrap;
+}
+
+.badge {
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: var(--confirm-green);
+}
+
+/* Section Shared Styles */
+.section-title {
+    text-align: center;
+    font-size: 2.5rem;
+    margin-bottom: 60px;
+}
+
+.services-section, .testimonials-section {
+    padding: 80px 24px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.services-grid, .testimonials-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 30px;
+}
+
+/* Cards */
+.service-card {
+    padding: 40px 30px;
+    text-align: center;
+    transition: var(--transition-smooth);
+}
+
+.service-card:hover {
+    transform: translateY(-5px);
+    border-color: var(--clear-blue);
+    box-shadow: 0 8px 16px rgba(15, 52, 96, 0.1);
+}
+
+.service-icon {
+    font-size: 3rem;
+    margin-bottom: 20px;
+}
+
+.service-card h3 {
+    font-size: 1.4rem;
+    margin-bottom: 12px;
+}
+
+.service-card p {
+    color: var(--navy);
+    opacity: 0.8;
+}
+
+/* Testimonials */
+.testimonial-card {
+    padding: 30px;
+}
+
+.stars {
+    color: var(--amber-cta);
+    font-size: 1.5rem;
+    margin-bottom: 16px;
+}
+
+.testimonial-card p {
+    font-style: italic;
+    margin-bottom: 20px;
+}
+
+.testimonial-card h4 {
+    font-size: 1.1rem;
+}

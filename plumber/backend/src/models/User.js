@@ -65,19 +65,18 @@ const userSchema = new mongoose.Schema({
 });
 
 // Conditional Valdiations for Plumbers
-userSchema.pre('validate', function (next) {
+userSchema.pre('validate', function () {
   if (this.role === 'plumber') {
     if (!this.experience) this.invalidate('experience', 'Experience is required for plumbers');
     if (this.hourlyRate === undefined) this.invalidate('hourlyRate', 'Hourly rate is required for plumbers');
     if (!this.services || this.services.length === 0) this.invalidate('services', 'At least one service required for plumbers');
   }
-  next();
 });
 
 // Encrypt password using bcrypt before save
-userSchema.pre('save', async function (next) {
+userSchema.pre('save', async function () {
   if (!this.isModified('password')) {
-    next();
+    return;
   }
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);

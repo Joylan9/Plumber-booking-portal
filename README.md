@@ -6,6 +6,8 @@
 
 **An Enterprise-Grade, MERN-stack Architecture with GSAP & Framer Motion Integration**
 
+### 🔗 **[Live Demo Deployment](https://internship-five-tau.vercel.app/)**
+
 [![React](https://img.shields.io/badge/React-19.x-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://reactjs.org/)
 [![Vite](https://img.shields.io/badge/Vite-8.x-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
 [![Node.js](https://img.shields.io/badge/Node.js-Backend-339933?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org/)

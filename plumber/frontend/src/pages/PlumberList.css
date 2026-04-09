@@ -1,0 +1,180 @@
+.plumbers-page {
+    background-color: var(--surface);
+    min-height: calc(100vh - 80px);
+}
+
+.filter-bar {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: rgba(245, 247, 250, 0.85);
+    border-bottom: 1px solid var(--sky);
+    padding: 20px 0;
+}
+
+.filter-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.filter-container h2 {
+    font-size: 1.8rem;
+    color: var(--navy);
+}
+
+.filter-options {
+    display: flex;
+    gap: 16px;
+}
+
+.plumbers-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 24px;
+}
+
+.plumbers-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 30px;
+}
+
+.plumber-card {
+    background: white;
+    border: 1px solid var(--sky);
+    border-radius: 12px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.plumber-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.avatar {
+    width: 60px;
+    height: 60px;
+    background-color: var(--navy);
+    color: white;
+    font-size: 1.8rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+}
+
+.plumber-info h3 {
+    font-size: 1.2rem;
+    margin-bottom: 4px;
+}
+
+.area {
+    color: var(--muted);
+    font-size: 0.9rem;
+}
+
+.plumber-stats {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #E2E8F0;
+    padding-bottom: 16px;
+}
+
+.stars {
+    color: var(--amber-cta);
+    letter-spacing: 2px;
+}
+
+.rating-text {
+    color: var(--muted);
+    font-size: 0.85rem;
+    margin-left: 8px;
+}
+
+.experience-badge {
+    background-color: var(--mist);
+    color: var(--highlight);
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.plumber-services {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: auto;
+}
+
+.service-tag {
+    background-color: var(--surface);
+    border: 1px solid #E2E8F0;
+    color: var(--navy);
+    font-size: 0.8rem;
+    padding: 4px 10px;
+    border-radius: 4px;
+}
+
+.plumber-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px dashed #E2E8F0;
+}
+
+.rate {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--navy);
+}
+
+.rate span {
+    font-size: 0.9rem;
+    color: var(--muted);
+    font-weight: 400;
+}
+
+.book-sm-btn {
+    padding: 10px 20px;
+    font-size: 0.9rem;
+}
+
+/* Skeleton Loading Animation Rules Globally */
+.loading-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 30px;
+}
+
+.skeleton-card {
+    height: 300px;
+    border-radius: 12px;
+    background: linear-gradient(90deg, #e2e8f0 25%, #f8fafc 50%, #e2e8f0 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+}
+
+@media (max-width: 768px) {
+    .filter-container {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .filter-options {
+        flex-direction: column;
+    }
+}

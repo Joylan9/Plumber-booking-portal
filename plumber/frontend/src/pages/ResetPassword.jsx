@@ -1,43 +1,45 @@
-import { useState, useContext } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useState } from 'react';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
-import { AuthContext } from '../context/AuthContext';
 import './Auth.css';
 
-const Login = () => {
-  const [email, setEmail] = useState('');
+const ResetPassword = () => {
+  const { token } = useParams();
+  const navigate = useNavigate();
+  
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  
   const [error, setError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  const { login } = useContext(AuthContext);
-  const navigate = useNavigate();
 
   const submitHandler = async (e) => {
     e.preventDefault();
     setError(null);
+    
+    if (password !== confirmPassword) {
+      setError("Passwords do not actively match.");
+      return;
+    }
+    
     setIsSubmitting(true);
+    
     try {
-      const { data } = await axios.post('http://localhost:5000/api/auth/login', {
-        email,
-        password,
-      });
+      const { data } = await axios.post(`http://localhost:5000/api/auth/reset-password/${token}`, { password });
 
       if (data.success) {
-        login(data.data);
-        // Morph button success before redirect could go here natively
-        setTimeout(() => navigate('/dashboard'), 600);
+        // Automatically redirect to log in securely
+        setTimeout(() => navigate('/login'), 1500);
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Login failed');
+      setError(err.response?.data?.message || 'Password reset structurally failed');
       setIsSubmitting(false);
     }
   };
 
   return (
     <div className="auth-container split-layout">
-      
       {/* Left Animated Panel */}
       <motion.div 
         className="auth-hero-panel"
@@ -46,16 +48,16 @@ const Login = () => {
         transition={{ duration: 0.6, ease: "easeOut" }}
       >
         <div className="hero-branding">
-          <h2>FlowMatch Portal</h2>
-          <p>Secure pipeline access.</p>
+          <h2>Authentication Recovery</h2>
+          <p>Securely reset your credentials globally.</p>
         </div>
       </motion.div>
 
       {/* Form Panel */}
       <div className="auth-form-panel">
         <div className="auth-card">
-          <h2 className="auth-title">Welcome Back</h2>
-          <p className="auth-subtitle">Login to manage your bookings</p>
+          <h2 className="auth-title">Set New Password</h2>
+          <p className="auth-subtitle">Provide your newly requested secure parameters</p>
           
           <AnimatePresence>
             {error && (
@@ -72,21 +74,7 @@ const Login = () => {
 
           <form onSubmit={submitHandler} className="auth-form">
             <div className="form-group">
-              <label>Email Address</label>
-              <div className="input-wrapper">
-                <input 
-                  type="email" 
-                  className="premium-input animated-underline" 
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-                <motion.div className="focus-line" layoutId="focus-line"></motion.div>
-              </div>
-            </div>
-
-            <div className="form-group">
-              <label>Password</label>
+              <label>New Password</label>
               <div className="input-wrapper">
                 <input 
                   type="password" 
@@ -94,10 +82,22 @@ const Login = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
+                  minLength="6"
                 />
               </div>
-              <div style={{ textAlign: 'right', marginTop: '8px' }}>
-                <Link to="/forgot-password" style={{ fontSize: '0.85rem', color: 'var(--clear-blue)', textDecoration: 'none', fontWeight: '500' }}>Forgot password?</Link>
+            </div>
+
+            <div className="form-group">
+              <label>Confirm Password</label>
+              <div className="input-wrapper">
+                <input 
+                  type="password" 
+                  className="premium-input animated-underline" 
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                  minLength="6"
+                />
               </div>
             </div>
 
@@ -114,12 +114,12 @@ const Login = () => {
                    transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
                    style={{ width: 20, height: 20, border: '2px solid #fff', borderTopColor: 'transparent', borderRadius: '50%', margin: '0 auto' }}
                  />
-              ) : 'Sign In To Proceed'}
+              ) : 'Confirm Reset Password'}
             </motion.button>
           </form>
 
-          <div className="auth-footer">
-            Don't have an account? <Link to="/register">Sign Up Now</Link>
+          <div className="auth-footer" style={{ marginTop: '30px' }}>
+            <Link to="/login">Cancel & Return</Link>
           </div>
         </div>
       </div>
@@ -127,4 +127,4 @@ const Login = () => {
   );
 };
 
-export default Login;
+export default ResetPassword;

@@ -128,7 +128,7 @@ const updateBookingStatus = async (req, res) => {
     res.status(200).json({
       success: true,
       data: booking,
-      message: \`Booking seamlessly transitioned to \${status}\`
+      message: `Booking seamlessly transitioned to ${status}`
     });
 
   } catch (error) {

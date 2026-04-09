@@ -2,6 +2,7 @@ const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
 const connectDB = require('./config/db');
+const authRoutes = require('./routes/authRoutes');
 
 // Load env vars
 dotenv.config();
@@ -15,14 +16,29 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// Mount routers (placeholders - will be created later)
-// app.use('/api/auth', require('./routes/auth'));
-// app.use('/api/plumbers', require('./routes/plumbers'));
-// app.use('/api/bookings', require('./routes/bookings'));
-// app.use('/api/reviews', require('./routes/reviews'));
+// Mount routers
+app.use('/api/auth', authRoutes);
 
+// Root route
 app.get('/', (req, res) => {
   res.send('MERN Plumber Booking Portal API is running');
+});
+
+// Global Error Handling Middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(err.status || 500).json({
+    success: false,
+    message: err.message || 'Server Error'
+  });
+});
+
+// Handle 404
+app.use((req, res, next) => {
+  res.status(404).json({
+    success: false,
+    message: 'API route not found'
+  });
 });
 
 const PORT = process.env.PORT || 5000;

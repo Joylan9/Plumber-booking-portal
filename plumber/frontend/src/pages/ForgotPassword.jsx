@@ -102,7 +102,7 @@ const ForgotPassword = () => {
               >
                 ✓
               </motion.div>
-              <p>Please check your inbox natively. (Since this is a simulated demo environment, check the Node Backend Console to see the generated Token link!)</p>
+              <p>The reset link has been dispatched. Please check your inbox and click the link to securely reset your password.</p>
             </div>
           )}
 

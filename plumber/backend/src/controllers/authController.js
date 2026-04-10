@@ -136,15 +136,65 @@ const forgotPassword = async (req, res) => {
 
     await user.save({ validateBeforeSave: false });
 
-    // SIMULATED EMAIL TRANSPORT: (In production, replace with Nodemailer/SendGrid here)
-    console.log(`[SIMULATED EMAIL] Password reset token generated for ${user.email} => Token: ${resetToken}`);
+    // ENTERPRISE EMAIL TRANSPORT
+    // Assume frontend runs on port 5173 natively
+    const resetUrl = `http://localhost:5173/reset-password/${resetToken}`;
 
-    res.status(200).json({
-      success: true,
-      message: 'If an account matches that email, a reset token has been processed.',
-      // For testing explicitly pass token back (DO NOT DO IN PRODUCTION)
-      debug_token: resetToken
-    });
+    const messageHtml = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
+        <div style="background-color: #2E7D32; padding: 20px; text-align: center;">
+          <h2 style="color: #ffffff; margin: 0;">Plumber Booking Portal</h2>
+        </div>
+        <div style="padding: 30px; background-color: #f9fdfa;">
+          <h3 style="color: #333333; margin-top: 0;">Password Reset Request</h3>
+          <p style="color: #555555; line-height: 1.6;">
+            Hello ${user.name},
+          </p>
+          <p style="color: #555555; line-height: 1.6;">
+            You requested to reset your password. Please click the button below to complete the process. This link is valid for 10 minutes.
+          </p>
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${resetUrl}" style="background-color: #4CAF50; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block;">Reset My Password</a>
+          </div>
+          <p style="color: #888888; font-size: 0.9em; line-height: 1.5;">
+            If you didn't request a password reset, you can safely ignore this email.
+          </p>
+        </div>
+        <div style="background-color: #eeeeee; padding: 15px; text-align: center;">
+          <p style="color: #999999; font-size: 0.85em; margin: 0;">&copy; 2026 Plumber Booking Express. All rights reserved.</p>
+        </div>
+      </div>
+    `;
+
+    try {
+      if (process.env.SMTP_EMAIL && process.env.SMTP_PASSWORD) {
+        // Only attempt to send if credentials exist, otherwise log error but don't crash route
+        await require('../utils/sendEmail')({
+          email: user.email,
+          subject: 'Your Password Reset Link',
+          html: messageHtml
+        });
+      } else {
+        console.warn('⚠️ SMTP credentials not found in .env! Email dispatch bypassed.');
+        console.log(`[SIMULATED EMAIL] URL: ${resetUrl}`);
+      }
+
+      res.status(200).json({
+        success: true,
+        message: 'If an account matches that email, a reset link has been dispatched to your inbox.',
+      });
+    } catch (err) {
+      console.error('Email dispatch failed:', err);
+      // Reset user token so they can try again
+      user.resetPasswordToken = undefined;
+      user.resetPasswordExpire = undefined;
+      await user.save({ validateBeforeSave: false });
+
+      return res.status(500).json({
+        success: false,
+        message: 'Email could not be dispatched. Please contact support.',
+      });
+    }
 
   } catch (error) {
     res.status(500).json({

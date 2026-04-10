@@ -94,21 +94,21 @@ userSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
 
-// Generate and hash password token securely
+// Generate and hash 6-digit OTP securely
 userSchema.methods.getResetPasswordToken = function () {
-  // Generate random 20 character buffer natively Hexing
-  const resetToken = crypto.randomBytes(20).toString('hex');
+  // Generate 6-digit dynamic OTP
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
   // Hash the payload natively to DB and map to schema
   this.resetPasswordToken = crypto
     .createHash('sha256')
-    .update(resetToken)
+    .update(otp)
     .digest('hex');
 
   // Set expiration mapping 10 minutes effectively securely
   this.resetPasswordExpire = Date.now() + 10 * 60 * 1000;
 
-  return resetToken;
+  return otp;
 };
 
 const User = mongoose.model('User', userSchema);

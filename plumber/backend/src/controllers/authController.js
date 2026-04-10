@@ -137,9 +137,6 @@ const forgotPassword = async (req, res) => {
     await user.save({ validateBeforeSave: false });
 
     // ENTERPRISE EMAIL TRANSPORT
-    // Assume frontend runs on port 5173 natively
-    const resetUrl = `http://localhost:5173/reset-password/${resetToken}`;
-
     const messageHtml = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
         <div style="background-color: #2E7D32; padding: 20px; text-align: center;">
@@ -151,10 +148,10 @@ const forgotPassword = async (req, res) => {
             Hello ${user.name},
           </p>
           <p style="color: #555555; line-height: 1.6;">
-            You requested to reset your password. Please click the button below to complete the process. This link is valid for 10 minutes.
+            We received a request to securely reset your password. Please use the verification code below to authorize this change. This code is valid for 10 minutes.
           </p>
           <div style="text-align: center; margin: 30px 0;">
-            <a href="${resetUrl}" style="background-color: #4CAF50; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block;">Reset My Password</a>
+            <div style="background-color: #f1f8f5; border: 2px dashed #4CAF50; color: #2E7D32; padding: 16px 32px; border-radius: 8px; font-size: 32px; font-weight: bold; letter-spacing: 6px; display: inline-block;">${resetToken}</div>
           </div>
           <p style="color: #888888; font-size: 0.9em; line-height: 1.5;">
             If you didn't request a password reset, you can safely ignore this email.
@@ -176,7 +173,7 @@ const forgotPassword = async (req, res) => {
         });
       } else {
         console.warn('⚠️ SMTP credentials not found in .env! Email dispatch bypassed.');
-        console.log(`[SIMULATED EMAIL] URL: ${resetUrl}`);
+        console.log(`[SIMULATED EMAIL] OTP: ${resetToken}`);
       }
 
       res.status(200).json({
@@ -205,17 +202,24 @@ const forgotPassword = async (req, res) => {
 };
 
 // @desc    Reset Password
-// @route   POST /api/auth/reset-password/:token
+// @route   POST /api/auth/reset-password
 // @access  Public
 const resetPassword = async (req, res) => {
   try {
+    const { email, otp, password } = req.body;
+
+    if (!email || !otp || !password) {
+      return res.status(400).json({ success: false, message: 'Email, Verification Code, and New Password are required' });
+    }
+
     // Reconstruct token hash to compare to DB mapping
     const resetPasswordToken = crypto
       .createHash('sha256')
-      .update(req.params.token)
+      .update(otp)
       .digest('hex');
 
     const user = await User.findOne({
+      email,
       resetPasswordToken,
       resetPasswordExpire: { $gt: Date.now() },
     });

@@ -7,12 +7,16 @@
     <strong>A Premium, High-End MERN Stack Architecture for Connecting Clients with Professional Plumbers</strong>
   </p>
   
+  ### 🔗 **[Live Demo Deployment (Vercel)](https://internship-five-tau.vercel.app/)**
+  
   <p align="center">
-    <a href="#"><img src="https://img.shields.io/badge/React-18.x-61DAFB?style=for-the-badge&logo=react&logoColor=white" alt="React" /></a>
+    <a href="#"><img src="https://img.shields.io/badge/React-18.x-61DAFB?style=for-the-badge&logo=react&logoColor=black" alt="React" /></a>
+    <a href="#"><img src="https://img.shields.io/badge/Vite-8.x-646CFF?style=for-the-badge&logo=vite&logoColor=white" alt="Vite" /></a>
     <a href="#"><img src="https://img.shields.io/badge/Node.js-20.x-339933?style=for-the-badge&logo=nodedotjs&logoColor=white" alt="Node" /></a>
     <a href="#"><img src="https://img.shields.io/badge/MongoDB-Enterprise-47A248?style=for-the-badge&logo=mongodb&logoColor=white" alt="MongoDB" /></a>
     <a href="#"><img src="https://img.shields.io/badge/Express-Backend-000000?style=for-the-badge&logo=express&logoColor=white" alt="Express" /></a>
-    <a href="#"><img src="https://img.shields.io/badge/Framer_Motion-UI-0055FF?style=for-the-badge&logo=framer&logoColor=white" alt="Framer Motion" /></a>
+    <a href="#"><img src="https://img.shields.io/badge/Framer_Motion-UI-0055FF?style=for-the-badge&logo=framer&logoColor=white" alt="Framer" /></a>
+    <a href="#"><img src="https://img.shields.io/badge/GSAP-Animations-88CE02?style=for-the-badge&logo=greensock&logoColor=white" alt="GSAP" /></a>
   </p>
 
   <img src="https://readme-typing-svg.herokuapp.com?font=Syne&weight=700&size=24&duration=3000&color=2E86C1&center=true&vCenter=true&lines=Enterprise-Grade+Security;Responsive+Mobile-First+UX;World-Class+Framer+UI;Dynamic+Role+Onboarding" alt="Typing SVG" />
@@ -21,7 +25,7 @@
 ---
 
 ## 🌟 Executive Overview
-**FlowMatch** elegantly resolves the friction of booking trusted home professionals. Built on a highly-scalable **MERN** *(MongoDB, Express, React, Node.js)* stack, this repository serves as a masterclass in frontend fluid responsiveness, secure backend cryptography, and buttery-smooth user experiences powered by `framer-motion`.
+**FlowMatch** elegantly resolves the friction of booking trusted home professionals. transcending traditional booking systems by securely bridging complex relational backend database modeling with a highly polished, 60fps cinematic front-end using **GSAP** and **Framer Motion**.
 
 <div align="center">
   <img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/react/react-original-wordmark.svg" width="60" />
@@ -40,12 +44,13 @@
 *   **Password Visibility Optics:** Custom handcrafted interactive SVGs injected directly into component states globally. 
 
 ### 📱 Flawless Fluid Responsiveness (Mobile-First)
-*   **Zero Framework CSS Architecture:** Fully purged of heavy UI libraries. Mastered entirely via pure Vanilla CSS variables, `clamp()` fluid typologies, and strictly responsive `@media` matrices.
+*   **Zero Framework CSS Architecture:** Fully purged of heavy UI libraries. Mastered entirely via pure Vanilla CSS variables, `clamp()` fluid typologies, and strictly responsive `@media` matrices wrapping across all 320px to 1440px displays seamlessly.
 *   **Hamburger Toggle Mechanics:** Interactive state-driven navigational drawers optimized specifically for iOS and Android web views without JavaScript bloat.
 *   **Auto-Shrink Grids:** Complex tabular environments dynamically collapse natively into stacked `<cards>` upon intersecting `768px` breakpoints organically.
 
-### 🎭 Cinematic UI/UX Onboarding (Framer Motion)
+### 🎭 Cinematic UI/UX Onboarding (Framer Motion & GSAP)
 *   **3-Phase Staggered Registration:** Eradicated the monolithic scroll-form. Users undergo an immersive 3-step dynamic progressive onboarding wizard. Identifies Customer vs Professional dynamically mapping payload schemas prior to MongoDB submissions.
+*   **GSAP & Lenis Smooth Parallax:** Scrubbed logic tracking absolute Y-axis physics simulating spatial depth seamlessly, wrapped inside Lenis native smooth scrollers for 60fps framerates.
 *   **Micro-Interactions:** Embedded logic for real-time password strength gradient rendering natively measuring structural complexities in the keystrokes.
 
 ---
@@ -68,7 +73,7 @@ cd Plumber-booking-portal
 
 **2. Backend Bootup**
 ```bash
-cd backend
+cd plumber/backend
 npm install
 ```
 *Create a `.env` file within the `/backend` directory containing the keys detailed in the Environment setup below.*
@@ -89,7 +94,7 @@ npm run dev
 ## 🔐 Environment Variables (.env)
 
 The server architecture requires strict payload keys to establish proper cryptographic states. 
-Please ensure your local `/backend/.env` is structurally unified:
+Please ensure your local `plumber/backend/.env` is structurally unified:
 
 ```env
 # Infrastructure Routing

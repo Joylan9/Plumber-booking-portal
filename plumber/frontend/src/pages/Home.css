@@ -9,11 +9,17 @@
     background: linear-gradient(135deg, #0A2540, #2E6DA4, #0A2540);
     background-size: 300% 300%;
     animation: gradientShift 8s ease infinite;
-    padding: 120px 24px;
+    padding: 60px 20px; /* Reduced for mobile */
     text-align: center;
     color: #fff;
     position: relative;
     overflow: hidden;
+}
+
+@media (min-width: 768px) {
+    .hero-section {
+        padding: 120px 24px;
+    }
 }
 
 /* For GSAP Parallax Targeting */
@@ -36,7 +42,7 @@
 }
 
 .hero-title {
-    font-size: clamp(3rem, 7vw, 6rem);
+    font-size: clamp(2.5rem, 6vw, 6rem);
     line-height: 1.1;
     margin-bottom: 24px;
     color: #fff;
@@ -47,7 +53,7 @@
 }
 
 .hero-description {
-    font-size: 1.1rem;
+    font-size: clamp(1rem, 2vw, 1.1rem);
     color: #E2E8F0;
     margin-bottom: 40px;
     line-height: 1.6;
@@ -55,19 +61,37 @@
 
 .hero-actions {
     display: flex;
-    gap: 20px;
+    flex-direction: column;
+    gap: 16px;
     justify-content: center;
+    align-items: center;
+}
+
+@media (min-width: 768px) {
+    .hero-actions {
+        flex-direction: row;
+        gap: 20px;
+    }
 }
 
 /* Trust Badges */
 .trust-badges {
     display: flex;
     justify-content: center;
-    gap: 40px;
+    gap: 20px;
     padding: 30px 24px;
     background-color: var(--navy);
     color: #fff;
     flex-wrap: wrap;
+    flex-direction: column;
+    text-align: center;
+}
+
+@media (min-width: 768px) {
+    .trust-badges {
+        flex-direction: row;
+        gap: 40px;
+    }
 }
 
 .badge {
@@ -79,27 +103,52 @@
 /* Section Shared Styles */
 .section-title {
     text-align: center;
-    font-size: 2.5rem;
-    margin-bottom: 60px;
+    font-size: clamp(2rem, 5vw, 2.5rem);
+    margin-bottom: 40px;
+}
+
+@media (min-width: 768px) {
+    .section-title {
+        margin-bottom: 60px;
+    }
 }
 
 .services-section, .testimonials-section {
-    padding: 80px 24px;
+    padding: 60px 20px;
     max-width: 1200px;
     margin: 0 auto;
 }
 
+@media (min-width: 768px) {
+    .services-section, .testimonials-section {
+        padding: 80px 24px;
+    }
+}
+
 .services-grid, .testimonials-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 30px;
+    grid-template-columns: 1fr; /* Mobile first single column */
+    gap: 20px;
+}
+
+@media (min-width: 768px) {
+    .services-grid, .testimonials-grid {
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 30px;
+    }
 }
 
 /* Cards */
 .service-card {
-    padding: 40px 30px;
+    padding: 30px 24px;
     text-align: center;
     transition: var(--transition-smooth);
+}
+
+@media (min-width: 768px) {
+    .service-card {
+        padding: 40px 30px;
+    }
 }
 
 .service-card:hover {
@@ -125,7 +174,13 @@
 
 /* Testimonials */
 .testimonial-card {
-    padding: 30px;
+    padding: 24px;
+}
+
+@media (min-width: 768px) {
+    .testimonial-card {
+        padding: 30px;
+    }
 }
 
 .stars {

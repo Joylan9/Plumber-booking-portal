@@ -9,50 +9,106 @@
     z-index: 10;
     background: rgba(245, 247, 250, 0.85);
     border-bottom: 1px solid var(--sky);
-    padding: 20px 0;
+    padding: 16px 0;
+}
+
+@media (min-width: 768px) {
+    .filter-bar {
+        padding: 20px 0;
+    }
 }
 
 .filter-container {
     max-width: 1200px;
+    width: 100%;
     margin: 0 auto;
-    padding: 0 24px;
+    padding: 0 16px;
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    flex-direction: column;
+    align-items: stretch;
     flex-wrap: wrap;
-    gap: 16px;
+    gap: 12px;
+}
+
+@media (min-width: 768px) {
+    .filter-container {
+        padding: 0 24px;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+    }
 }
 
 .filter-container h2 {
-    font-size: 1.8rem;
+    font-size: clamp(1.5rem, 4vw, 1.8rem);
     color: var(--navy);
 }
 
 .filter-options {
     display: flex;
-    gap: 16px;
+    flex-direction: column;
+    gap: 12px;
+}
+
+@media (min-width: 768px) {
+    .filter-options {
+        flex-direction: row;
+        gap: 16px;
+    }
+}
+
+/* Base inputs specifically in Plumber list to stretch on mobile */
+.filter-options input, .filter-options select {
+    width: 100%;
+}
+
+@media (min-width: 768px) {
+    .filter-options input, .filter-options select {
+        width: auto;
+    }
 }
 
 .plumbers-container {
     max-width: 1200px;
+    width: 100%;
     margin: 0 auto;
-    padding: 40px 24px;
+    padding: 24px 16px;
+}
+
+@media (min-width: 768px) {
+    .plumbers-container {
+        padding: 40px 24px;
+    }
 }
 
 .plumbers-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 30px;
+    grid-template-columns: 1fr;
+    gap: 20px;
+}
+
+@media (min-width: 768px) {
+    .plumbers-grid {
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 30px;
+    }
 }
 
 .plumber-card {
     background: white;
     border: 1px solid var(--sky);
     border-radius: 12px;
-    padding: 24px;
+    padding: 20px;
     display: flex;
     flex-direction: column;
     gap: 16px;
+}
+
+@media (min-width: 768px) {
+    .plumber-card {
+        padding: 24px;
+    }
 }
 
 .plumber-header {
@@ -72,11 +128,19 @@
     align-items: center;
     justify-content: center;
     border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.plumber-info {
+    min-width: 0; /* allows text truncation */
 }
 
 .plumber-info h3 {
     font-size: 1.2rem;
     margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .area {
@@ -110,6 +174,7 @@
     border-radius: 20px;
     font-size: 0.85rem;
     font-weight: 600;
+    white-space: nowrap;
 }
 
 .plumber-services {
@@ -135,10 +200,12 @@
     margin-top: 16px;
     padding-top: 16px;
     border-top: 1px dashed #E2E8F0;
+    flex-wrap: wrap;
+    gap: 12px;
 }
 
 .rate {
-    font-size: 1.4rem;
+    font-size: clamp(1.2rem, 3vw, 1.4rem);
     font-weight: 700;
     color: var(--navy);
 }
@@ -152,13 +219,27 @@
 .book-sm-btn {
     padding: 10px 20px;
     font-size: 0.9rem;
+    width: 100%;
+}
+
+@media (min-width: 480px) {
+    .book-sm-btn {
+        width: auto;
+    }
 }
 
 /* Skeleton Loading Animation Rules Globally */
 .loading-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 30px;
+    grid-template-columns: 1fr;
+    gap: 20px;
+}
+
+@media (min-width: 768px) {
+    .loading-grid {
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 30px;
+    }
 }
 
 .skeleton-card {
@@ -167,14 +248,5 @@
     background: linear-gradient(90deg, #e2e8f0 25%, #f8fafc 50%, #e2e8f0 75%);
     background-size: 200% 100%;
     animation: shimmer 1.5s infinite;
-}
-
-@media (max-width: 768px) {
-    .filter-container {
-        flex-direction: column;
-        align-items: stretch;
-    }
-    .filter-options {
-        flex-direction: column;
-    }
+    width: 100%;
 }

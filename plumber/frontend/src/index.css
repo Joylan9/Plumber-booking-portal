@@ -41,14 +41,34 @@ body {
   color: var(--text-body);
   line-height: 1.7;
   overflow-x: hidden;
+  font-size: 16px; /* Base size */
 }
 
+@media (max-width: 767px) {
+  body {
+    font-size: 14px; /* Minimum mobile font size */
+  }
+}
+
+img, video, iframe {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Fluid Typography */
 h1, h2, h3, h4, h5, h6 {
   font-family: 'Syne', sans-serif;
   color: var(--navy);
   font-weight: 700;
   letter-spacing: -0.02em;
+  margin-bottom: 0.5em;
 }
+h1 { font-size: clamp(2rem, 5vw, 4rem); }
+h2 { font-size: clamp(1.75rem, 4vw, 3rem); }
+h3 { font-size: clamp(1.5rem, 3vw, 2.25rem); }
+h4 { font-size: clamp(1.25rem, 2.5vw, 1.75rem); }
+h5, h6 { font-size: clamp(1.1rem, 2vw, 1.25rem); }
 
 a {
   color: var(--clear-blue);
@@ -66,6 +86,7 @@ a:hover {
   border: 1px solid var(--sky);
   border-radius: 8px;
   box-shadow: 0 4px 6px rgba(15, 52, 96, 0.05);
+  width: 100%;
 }
 
 /* Premium Inputs */
@@ -79,11 +100,19 @@ a:hover {
   font-family: 'Inter', sans-serif;
   transition: var(--transition-smooth);
   outline: none;
+  /* Prevent horizontal zoom on iOS */
+  font-size: 16px; 
 }
 
 .premium-input:focus {
   border-color: var(--clear-blue);
   box-shadow: 0 0 0 3px rgba(46, 134, 193, 0.2);
+}
+
+/* Base Form Reset for mobile */
+.form-group {
+  width: 100%;
+  margin-bottom: 1rem;
 }
 
 /* Buttons */
@@ -96,6 +125,17 @@ a:hover {
   font-weight: 600;
   cursor: pointer;
   transition: var(--transition-smooth);
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  .btn-primary {
+    width: auto;
+  }
+}
+
+.btn-primary.full-width {
+  width: 100%;
 }
 
 .btn-primary:hover {
@@ -113,6 +153,17 @@ a:hover {
   font-weight: 600;
   cursor: pointer;
   transition: var(--transition-smooth);
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  .btn-outline {
+    width: auto;
+  }
+}
+
+.btn-outline.full-width {
+  width: 100%;
 }
 
 .btn-outline:hover {

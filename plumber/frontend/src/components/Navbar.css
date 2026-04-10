@@ -13,6 +13,7 @@
     justify-content: space-between;
     align-items: center;
     max-width: 1200px;
+    width: 100%;
     margin: 0 auto;
 }
 
@@ -20,30 +21,90 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    font-size: 1.5rem;
+    font-size: clamp(1.2rem, 3vw, 1.5rem);
     font-weight: 700;
     color: #fff;
+    z-index: 1001; /* Stay above mobile menu */
 }
 
 .logo-icon {
-    font-size: 1.8rem;
+    font-size: clamp(1.4rem, 4vw, 1.8rem);
 }
 
 .highlight {
     color: var(--sky);
 }
 
+/* Mobile Toggle */
+.mobile-toggle {
+    display: block;
+    color: #fff;
+    font-size: 1.8rem;
+    cursor: pointer;
+    z-index: 1001;
+    min-width: 44px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+@media (min-width: 768px) {
+    .mobile-toggle {
+        display: none;
+    }
+}
+
+/* Mobile-first Nav Menu */
 .nav-menu {
     display: flex;
+    flex-direction: column;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    background-color: var(--steel-blue);
+    padding: 20px 24px;
+    gap: 20px;
+    transform: translateY(-150%);
+    opacity: 0;
+    transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     list-style: none;
-    align-items: center;
-    gap: 32px;
+}
+
+.nav-menu.open {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+@media (min-width: 768px) {
+    .nav-menu {
+        position: static;
+        flex-direction: row;
+        width: auto;
+        padding: 0;
+        background: transparent;
+        transform: none;
+        opacity: 1;
+        box-shadow: none;
+        align-items: center;
+        gap: 32px;
+    }
 }
 
 .nav-link {
+    display: block;
     font-weight: 500;
     color: #fff;
     transition: var(--transition-smooth);
+    padding: 8px 0;
+}
+
+@media (min-width: 768px) {
+    .nav-link {
+        padding: 0;
+    }
 }
 
 .nav-link:hover {
@@ -58,14 +119,36 @@
     color: var(--navy);
     background-color: var(--mist);
     border-radius: 20px;
+    display: inline-block;
 }
 
 .auth-buttons {
     display: flex;
-    align-items: center;
-    gap: 20px;
+    flex-direction: column;
+    gap: 16px;
+    width: 100%;
+}
+
+@media (min-width: 768px) {
+    .auth-buttons {
+        flex-direction: row;
+        align-items: center;
+        gap: 20px;
+        width: auto;
+    }
 }
 
 .auth-buttons .nav-link {
     font-weight: 600;
+    text-align: center;
+}
+
+.logout-btn {
+    width: 100%;
+}
+
+@media (min-width: 768px) {
+    .logout-btn {
+        width: auto;
+    }
 }

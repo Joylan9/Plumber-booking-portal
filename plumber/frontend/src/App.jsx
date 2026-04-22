@@ -23,6 +23,7 @@ const BookingDetail = lazy(() => import('./pages/BookingDetail'));
 const CustomerDashboard = lazy(() => import('./pages/CustomerDashboard'));
 const PlumberDashboard = lazy(() => import('./pages/PlumberDashboard'));
 const Profile = lazy(() => import('./pages/Profile'));
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
 
 const DashboardResolver = () => {
   const { user } = useAuth();
@@ -53,6 +54,11 @@ const AnimatedRoutes = () => {
           <Route path="/plumbers/:id" element={<PageWrapper><PlumberProfile /></PageWrapper>} />
 
           {/* Protected routes */}
+          <Route path="/admin" element={
+            <ProtectedRoute roles={['admin']}>
+              <AdminDashboard />
+            </ProtectedRoute>
+          } />
           <Route path="/profile" element={
             <ProtectedRoute roles={['customer', 'plumber']}>
               <PageWrapper><Profile /></PageWrapper>

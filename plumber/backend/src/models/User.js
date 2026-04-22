@@ -2,6 +2,8 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 const userSchema = new mongoose.Schema({
   name: {
     type: String,
@@ -13,7 +15,7 @@ const userSchema = new mongoose.Schema({
     required: [true, 'Email is required'],
     unique: true,
     match: [
-      /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/,
+      EMAIL_REGEX,
       'Please add a valid email format',
     ],
   },
@@ -42,9 +44,11 @@ const userSchema = new mongoose.Schema({
   },
   experience: {
     type: Number,
+    min: [0, 'Experience must be a non-negative number'],
   },
   hourlyRate: {
     type: Number,
+    min: [0, 'Hourly rate must be a non-negative number'],
   },
   services: {
     type: [String],

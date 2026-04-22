@@ -57,6 +57,19 @@ const validatePassword = (password) => {
   return null;
 };
 
+const parseNonNegativeNumber = (value, field) => {
+  if (value === undefined || value === null || value === '') {
+    return { hasValue: false, value: undefined };
+  }
+
+  const parsedValue = Number(value);
+  if (!Number.isFinite(parsedValue) || parsedValue < 0) {
+    throw createHttpError(400, `${field} must be a non-negative number`, field);
+  }
+
+  return { hasValue: true, value: parsedValue };
+};
+
 const resetPasswordEmailTemplate = ({ name, otp, resetUrl }) => `
   <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden;">
     <div style="background-color: #0A2540; padding: 24px; text-align: center;">
@@ -142,6 +155,9 @@ const registerUser = async (req, res, next) => {
       return next(createHttpError(400, 'Invalid role supplied', 'role'));
     }
 
+    const parsedExperience = parseNonNegativeNumber(experience, 'experience');
+    const parsedHourlyRate = parseNonNegativeNumber(hourlyRate, 'hourlyRate');
+
     const userExists = await User.findOne({ email: normalizedEmail });
 
     if (userExists) {
@@ -156,8 +172,8 @@ const registerUser = async (req, res, next) => {
       phone: normalizeOptionalString(phone),
       area: normalizeOptionalString(area),
       bio: normalizeOptionalString(bio),
-      experience: experience === undefined || experience === null || experience === '' ? undefined : Number(experience),
-      hourlyRate: hourlyRate === undefined || hourlyRate === null || hourlyRate === '' ? undefined : Number(hourlyRate),
+      experience: parsedExperience.hasValue ? parsedExperience.value : undefined,
+      hourlyRate: parsedHourlyRate.hasValue ? parsedHourlyRate.value : undefined,
       services: normalizeServices(services),
       availability: normalizeOptionalString(availability),
       profileImage: normalizeOptionalString(profileImage),

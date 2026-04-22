@@ -25,6 +25,23 @@ const state = {
   avatarPaths: [],
 };
 
+const SANITIZED_USER_KEYS = [
+  '_id',
+  'name',
+  'email',
+  'role',
+  'phone',
+  'area',
+  'profileImage',
+  'bio',
+  'experience',
+  'hourlyRate',
+  'services',
+  'availability',
+  'rating',
+  'totalReviews',
+];
+
 const request = async (path, { method = 'GET', token, body } = {}) => {
   const isFormData = typeof FormData !== 'undefined' && body instanceof FormData;
   const response = await fetch(`${BASE_URL}${path}`, {
@@ -64,6 +81,62 @@ const assert = (condition, label) => {
   }
 };
 
+const assertObjectHasKeys = (value, keys, label) => {
+  assert(value && typeof value === 'object' && !Array.isArray(value), `${label} object`);
+
+  for (const key of keys) {
+    assert(Object.prototype.hasOwnProperty.call(value, key), `${label} contains ${key}`);
+  }
+};
+
+const assertNoRawErrorDetails = (payload, label) => {
+  assert(payload && typeof payload.message === 'string' && payload.message.trim(), `${label} message`);
+  assert(!Object.prototype.hasOwnProperty.call(payload, 'stack'), `${label} omits stack`);
+};
+
+const assertSanitizedUserShape = (user, label, { expectToken = false } = {}) => {
+  assertObjectHasKeys(user, SANITIZED_USER_KEYS, label);
+  assert(Array.isArray(user.services), `${label} services array`);
+  assert(typeof user.rating === 'number', `${label} rating number`);
+  assert(typeof user.totalReviews === 'number', `${label} totalReviews number`);
+
+  if (expectToken) {
+    assert(typeof user.token === 'string' && user.token.length > 0, `${label} token`);
+  } else {
+    assert(!Object.prototype.hasOwnProperty.call(user, 'token'), `${label} omits token`);
+  }
+};
+
+const assertPlumberShape = (plumber, label) => {
+  assertObjectHasKeys(
+    plumber,
+    ['_id', 'name', 'area', 'bio', 'experience', 'hourlyRate', 'services', 'rating', 'totalReviews'],
+    label
+  );
+  assert(Array.isArray(plumber.services), `${label} services array`);
+};
+
+const assertPopulatedBooking = (booking, label) => {
+  assertObjectHasKeys(
+    booking,
+    ['_id', 'customerId', 'plumberId', 'serviceType', 'date', 'time', 'address', 'issueDescription', 'status'],
+    label
+  );
+  assertObjectHasKeys(booking.customerId, ['_id', 'name', 'email', 'phone', 'area'], `${label} customerId`);
+  assertObjectHasKeys(
+    booking.plumberId,
+    ['_id', 'name', 'email', 'phone', 'area', 'services', 'hourlyRate', 'rating', 'totalReviews', 'experience'],
+    `${label} plumberId`
+  );
+  assert(Array.isArray(booking.plumberId.services), `${label} plumberId services array`);
+};
+
+const assertReviewShape = (review, label) => {
+  assertObjectHasKeys(review, ['_id', 'bookingId', 'customerId', 'plumberId', 'rating', 'comment'], label);
+  assertObjectHasKeys(review.customerId, ['_id', 'name'], `${label} customerId`);
+  assertObjectHasKeys(review.plumberId, ['_id', 'name', 'rating', 'totalReviews'], `${label} plumberId`);
+};
+
 const logStep = (message) => {
   console.log(`- ${message}`);
 };
@@ -76,8 +149,8 @@ const getUploadFilePath = (avatarPath) => {
   return path.join(__dirname, '../../uploads', path.basename(avatarPath));
 };
 
-const createApiUser = async ({ name, role, password, extra = {} }) => {
-  const email = `${role}.${runId}.${name.toLowerCase().replace(/\s+/g, '')}@example.com`;
+const createApiUser = async ({ name, role, password, email: providedEmail, extra = {} }) => {
+  const email = providedEmail || `${role}.${runId}.${name.toLowerCase().replace(/\s+/g, '')}@example.com`;
   const response = await request('/api/auth/register', {
     method: 'POST',
     body: {
@@ -91,6 +164,7 @@ const createApiUser = async ({ name, role, password, extra = {} }) => {
 
   assertStatus(response, 201, `register ${role}`);
   assert(response.payload?.data?.token, `register ${role} token`);
+  assertSanitizedUserShape(response.payload?.data, `register ${role}`, { expectToken: true });
 
   return {
     email,
@@ -106,7 +180,13 @@ const loginApiUser = async ({ email, password }, expectedStatus = 200) => {
   });
 
   assertStatus(response, expectedStatus, `login ${email}`);
-  return response.payload?.data || null;
+  const user = response.payload?.data || null;
+
+  if (expectedStatus === 200) {
+    assertSanitizedUserShape(user, `login ${email}`, { expectToken: true });
+  }
+
+  return user;
 };
 
 const seedAdminUser = async () => {
@@ -175,6 +255,38 @@ const main = async () => {
     state.customer = customerSeed.user;
     logStep('customer register/login contract verified');
 
+    const invalidPlumberExperience = await request('/api/auth/register', {
+      method: 'POST',
+      body: {
+        name: 'Invalid Plumber Experience',
+        email: `invalid.experience.${runId}@example.com`,
+        password: 'Plumber123!',
+        role: 'plumber',
+        experience: -1,
+        hourlyRate: 75,
+        services: ['Leak Repair'],
+      },
+    });
+    assertStatus(invalidPlumberExperience, 400, 'invalid plumber experience rejected');
+    assertNoRawErrorDetails(invalidPlumberExperience.payload, 'invalid plumber experience error');
+    assert(invalidPlumberExperience.payload?.field === 'experience', 'invalid plumber experience field');
+
+    const invalidPlumberHourlyRate = await request('/api/auth/register', {
+      method: 'POST',
+      body: {
+        name: 'Invalid Plumber Rate',
+        email: `invalid.hourly.${runId}@example.com`,
+        password: 'Plumber123!',
+        role: 'plumber',
+        experience: 4,
+        hourlyRate: 'not-a-number',
+        services: ['Leak Repair'],
+      },
+    });
+    assertStatus(invalidPlumberHourlyRate, 400, 'invalid plumber hourly rate rejected');
+    assertNoRawErrorDetails(invalidPlumberHourlyRate.payload, 'invalid plumber hourly rate error');
+    assert(invalidPlumberHourlyRate.payload?.field === 'hourlyRate', 'invalid plumber hourly rate field');
+
     const plumberSeed = await createApiUser({
       name: 'Smoke Plumber',
       role: 'plumber',
@@ -193,6 +305,7 @@ const main = async () => {
 
     const secondCustomerSeed = await createApiUser({
       name: 'Other Customer',
+      email: `other.customer.${runId}@example.technology`,
       role: 'customer',
       password: 'Customer123!',
     });
@@ -227,6 +340,7 @@ const main = async () => {
       },
     });
     assertStatus(adminRegisterBlocked, 403, 'admin registration blocked');
+    assertNoRawErrorDetails(adminRegisterBlocked.payload, 'admin registration blocked error');
 
     const forgotPasswordResult = await request('/api/auth/forgot-password', {
       method: 'POST',
@@ -245,6 +359,7 @@ const main = async () => {
       },
     });
     assertStatus(resetOtpResult, 200, 'OTP reset password');
+    assertSanitizedUserShape(resetOtpResult.payload?.data, 'OTP reset password user', { expectToken: true });
     state.customer = resetOtpResult.payload.data;
     await loginApiUser({ email: customerSeed.email, password: 'Customer456!' });
 
@@ -254,6 +369,7 @@ const main = async () => {
       body: { password: 'Customer789!' },
     });
     assertStatus(resetTokenPostResult, 200, 'token reset password POST');
+    assertSanitizedUserShape(resetTokenPostResult.payload?.data, 'token reset password POST user', { expectToken: true });
     state.customer = resetTokenPostResult.payload.data;
     await loginApiUser({ email: customerSeed.email, password: 'Customer789!' });
 
@@ -263,6 +379,7 @@ const main = async () => {
       body: { password: 'Customer999!' },
     });
     assertStatus(resetTokenPutResult, 200, 'token reset password PUT');
+    assertSanitizedUserShape(resetTokenPutResult.payload?.data, 'token reset password PUT user', { expectToken: true });
     state.customer = resetTokenPutResult.payload.data;
     await loginApiUser({ email: customerSeed.email, password: 'Customer999!' });
     logStep('password reset OTP and token route compatibility verified');
@@ -279,6 +396,7 @@ const main = async () => {
     });
     assertStatus(customerProfileUpdate, 200, 'customer profile update');
     assert(customerProfileUpdate.payload?.data?.name === 'Smoke Customer Updated', 'customer profile name updated');
+    assertSanitizedUserShape(customerProfileUpdate.payload?.data, 'customer profile update user');
     state.customer = { ...state.customer, ...customerProfileUpdate.payload.data };
 
     const plumberProfileUpdate = await request('/api/users/profile', {
@@ -296,6 +414,7 @@ const main = async () => {
     });
     assertStatus(plumberProfileUpdate, 200, 'plumber profile update');
     assert(plumberProfileUpdate.payload?.data?.services?.includes('Emergency'), 'plumber profile services updated');
+    assertSanitizedUserShape(plumberProfileUpdate.payload?.data, 'plumber profile update user');
     state.plumber = { ...state.plumber, ...plumberProfileUpdate.payload.data };
 
     const avatarForm = new FormData();
@@ -307,6 +426,7 @@ const main = async () => {
     });
     assertStatus(avatarUpload, 200, 'avatar upload');
     assert(avatarUpload.payload?.data?.profileImage?.startsWith('/uploads/'), 'avatar upload profile image path');
+    assertSanitizedUserShape(avatarUpload.payload?.data, 'avatar upload user');
     state.customer = { ...state.customer, ...avatarUpload.payload.data };
     state.avatarPaths.push(avatarUpload.payload.data.profileImage);
 
@@ -318,11 +438,13 @@ const main = async () => {
 
     const missingTokenResult = await request('/api/bookings');
     assertStatus(missingTokenResult, 401, 'missing token rejected');
+    assertNoRawErrorDetails(missingTokenResult.payload, 'missing token error');
 
     const invalidTokenResult = await request('/api/bookings', {
       token: 'not-a-valid-token',
     });
     assertStatus(invalidTokenResult, 401, 'invalid token rejected');
+    assertNoRawErrorDetails(invalidTokenResult.payload, 'invalid token error');
 
     const expiredToken = jwt.sign(
       { id: state.customer._id, role: 'customer' },
@@ -333,14 +455,30 @@ const main = async () => {
       token: expiredToken,
     });
     assertStatus(expiredTokenResult, 401, 'expired token rejected');
+    assertNoRawErrorDetails(expiredTokenResult.payload, 'expired token error');
     logStep('auth guard token failures verified');
 
     const plumbersList = await request('/api/plumbers');
     assertStatus(plumbersList, 200, 'plumber list');
     assert(Array.isArray(plumbersList.payload?.data), 'plumber list array');
+    assert(plumbersList.payload.data.length >= 2, 'plumber list contains seeded plumbers');
+    plumbersList.payload.data.forEach((plumber, index) => {
+      assertPlumberShape(plumber, `plumber list item ${index}`);
+    });
+
+    const filteredByArea = await request(`/api/plumbers?area=${encodeURIComponent('Updated Plumber Area')}`);
+    assertStatus(filteredByArea, 200, 'plumber list area filter');
+    assert(filteredByArea.payload?.data?.some((plumber) => plumber._id === state.plumber._id), 'plumber area filter returns updated plumber');
+    assert(filteredByArea.payload?.data?.every((plumber) => (plumber.area || '').toLowerCase().includes('updated plumber area')), 'plumber area filter narrows results');
+
+    const filteredByService = await request(`/api/plumbers?service=${encodeURIComponent('Emergency')}`);
+    assertStatus(filteredByService, 200, 'plumber list service filter');
+    assert(filteredByService.payload?.data?.some((plumber) => plumber._id === state.plumber._id), 'plumber service filter returns updated plumber');
+    assert(filteredByService.payload?.data?.every((plumber) => Array.isArray(plumber.services) && plumber.services.includes('Emergency')), 'plumber service filter narrows results');
 
     const plumberDetail = await request(`/api/plumbers/${state.plumber._id}`);
     assertStatus(plumberDetail, 200, 'plumber detail');
+    assertPlumberShape(plumberDetail.payload?.data, 'plumber detail');
     logStep('plumber list/detail routes verified');
 
     const bookingCreate = await request('/api/bookings', {
@@ -357,27 +495,51 @@ const main = async () => {
     });
     assertStatus(bookingCreate, 201, 'booking create');
     assert(bookingCreate.payload?.data?.serviceType === 'Leak Repair', 'booking serviceType derived');
+    assertPopulatedBooking(bookingCreate.payload?.data, 'booking create');
     state.bookingId = bookingCreate.payload.data._id;
 
     const customerBookings = await request('/api/bookings', { token: state.customer.token });
     assertStatus(customerBookings, 200, 'booking list alias');
     assert(Array.isArray(customerBookings.payload?.data), 'booking list data');
+    customerBookings.payload.data.forEach((booking, index) => {
+      assertPopulatedBooking(booking, `booking list alias item ${index}`);
+    });
 
     const customerMyBookings = await request('/api/bookings/my-bookings', { token: state.customer.token });
     assertStatus(customerMyBookings, 200, 'booking my-bookings');
+    customerMyBookings.payload.data.forEach((booking, index) => {
+      assertPopulatedBooking(booking, `booking my-bookings item ${index}`);
+    });
+
+    const plumberMyBookings = await request('/api/bookings/my-bookings', { token: state.plumber.token });
+    assertStatus(plumberMyBookings, 200, 'plumber my-bookings');
+    plumberMyBookings.payload.data.forEach((booking, index) => {
+      assertPopulatedBooking(booking, `plumber my-bookings item ${index}`);
+    });
+
+    const adminBookings = await request('/api/bookings', { token: state.admin.token });
+    assertStatus(adminBookings, 200, 'admin booking list');
+    assert(adminBookings.payload?.data?.some((booking) => booking._id === state.bookingId), 'admin booking list contains seeded booking');
 
     const bookingDetailCustomer = await request(`/api/bookings/${state.bookingId}`, { token: state.customer.token });
     assertStatus(bookingDetailCustomer, 200, 'booking detail customer');
-    assert(bookingDetailCustomer.payload?.data?.plumberId?.name, 'booking detail plumber populated');
+    assertPopulatedBooking(bookingDetailCustomer.payload?.data, 'booking detail customer');
 
     const bookingDetailPlumber = await request(`/api/bookings/${state.bookingId}`, { token: state.plumber.token });
     assertStatus(bookingDetailPlumber, 200, 'booking detail plumber');
+    assertPopulatedBooking(bookingDetailPlumber.payload?.data, 'booking detail plumber');
+
+    const bookingDetailAdmin = await request(`/api/bookings/${state.bookingId}`, { token: state.admin.token });
+    assertStatus(bookingDetailAdmin, 200, 'booking detail admin');
+    assertPopulatedBooking(bookingDetailAdmin.payload?.data, 'booking detail admin');
 
     const bookingDetailOtherCustomer = await request(`/api/bookings/${state.bookingId}`, { token: state.secondCustomer.token });
     assertStatus(bookingDetailOtherCustomer, 403, 'booking detail unauthorized');
+    assertNoRawErrorDetails(bookingDetailOtherCustomer.payload, 'booking detail unauthorized error');
 
     const bookingDetailOtherPlumber = await request(`/api/bookings/${state.bookingId}`, { token: state.secondPlumber.token });
     assertStatus(bookingDetailOtherPlumber, 403, 'booking detail other plumber forbidden');
+    assertNoRawErrorDetails(bookingDetailOtherPlumber.payload, 'booking detail other plumber error');
 
     const invalidCustomerStatusUpdate = await request(`/api/bookings/${state.bookingId}/status`, {
       method: 'PUT',
@@ -385,6 +547,15 @@ const main = async () => {
       body: { status: 'accepted' },
     });
     assertStatus(invalidCustomerStatusUpdate, 403, 'customer status update forbidden');
+    assertNoRawErrorDetails(invalidCustomerStatusUpdate.payload, 'customer status update error');
+
+    const unrelatedPlumberStatusUpdate = await request(`/api/bookings/${state.bookingId}/status`, {
+      method: 'PATCH',
+      token: state.secondPlumber.token,
+      body: { status: 'accepted' },
+    });
+    assertStatus(unrelatedPlumberStatusUpdate, 403, 'unrelated plumber status update forbidden');
+    assertNoRawErrorDetails(unrelatedPlumberStatusUpdate.payload, 'unrelated plumber status update error');
 
     const reviewBeforeComplete = await request('/api/reviews', {
       method: 'POST',
@@ -397,6 +568,7 @@ const main = async () => {
       },
     });
     assertStatus(reviewBeforeComplete, 400, 'review before booking completed');
+    assertNoRawErrorDetails(reviewBeforeComplete.payload, 'review before complete error');
 
     const acceptBooking = await request(`/api/bookings/${state.bookingId}/status`, {
       method: 'PATCH',
@@ -404,6 +576,7 @@ const main = async () => {
       body: { status: 'accepted' },
     });
     assertStatus(acceptBooking, 200, 'booking accept');
+    assertPopulatedBooking(acceptBooking.payload?.data, 'booking accept');
 
     const invalidTransition = await request(`/api/bookings/${state.bookingId}/status`, {
       method: 'PATCH',
@@ -411,6 +584,8 @@ const main = async () => {
       body: { status: 'pending' },
     });
     assertStatus(invalidTransition, 400, 'invalid booking transition');
+    assertNoRawErrorDetails(invalidTransition.payload, 'invalid booking transition error');
+    assert(invalidTransition.payload?.field === 'status', 'invalid booking transition field');
 
     const completeBooking = await request(`/api/bookings/${state.bookingId}/status`, {
       method: 'PUT',
@@ -418,6 +593,7 @@ const main = async () => {
       body: { status: 'completed' },
     });
     assertStatus(completeBooking, 200, 'booking complete');
+    assertPopulatedBooking(completeBooking.payload?.data, 'booking complete');
     logStep('booking create/list/detail/status flows verified');
 
     const reviewCreate = await request('/api/reviews', {
@@ -432,7 +608,7 @@ const main = async () => {
     });
     assertStatus(reviewCreate, 201, 'review create');
     state.reviewId = reviewCreate.payload?.data?._id;
-    assert(reviewCreate.payload?.data?.customerId?.name, 'review customer populated');
+    assertReviewShape(reviewCreate.payload?.data, 'review create');
 
     const duplicateReview = await request('/api/reviews', {
       method: 'POST',
@@ -445,6 +621,7 @@ const main = async () => {
       },
     });
     assertStatus(duplicateReview, 409, 'duplicate review blocked');
+    assertNoRawErrorDetails(duplicateReview.payload, 'duplicate review error');
 
     const plumberReviewForbidden = await request('/api/reviews', {
       method: 'POST',
@@ -457,15 +634,38 @@ const main = async () => {
       },
     });
     assertStatus(plumberReviewForbidden, 403, 'plumber review forbidden');
+    assertNoRawErrorDetails(plumberReviewForbidden.payload, 'plumber review forbidden error');
 
     const plumberReviews = await request(`/api/reviews/plumber/${state.plumber._id}`);
     assertStatus(plumberReviews, 200, 'review list');
     assert(Array.isArray(plumberReviews.payload?.data), 'review list data');
-    assert(plumberReviews.payload?.data?.[0]?.customerId?.name, 'review list customer name only');
+    plumberReviews.payload.data.forEach((review, index) => {
+      assertReviewShape(review, `review list item ${index}`);
+    });
     logStep('review create/list protections verified');
 
     const categoryList = await request('/api/categories');
     assertStatus(categoryList, 200, 'category list');
+    assert(Array.isArray(categoryList.payload?.data), 'category list data');
+
+    if (categoryList.payload.data.length > 0) {
+      const categorySnapshots = await Category.find({}, '_id isActive').lean();
+
+      try {
+        await Category.updateMany({}, { $set: { isActive: false } });
+
+        const emptyCategoryList = await request('/api/categories');
+        assertStatus(emptyCategoryList, 200, 'empty category list');
+        assert(Array.isArray(emptyCategoryList.payload?.data), 'empty category list data');
+        assert(emptyCategoryList.payload.data.length === 0, 'empty category list returns []');
+      } finally {
+        await Promise.all(categorySnapshots.map((category) => (
+          Category.updateOne({ _id: category._id }, { $set: { isActive: category.isActive } })
+        )));
+      }
+    } else {
+      assert(categoryList.payload.data.length === 0, 'category list empty array already safe');
+    }
 
     const categoryCreateForbidden = await request('/api/categories', {
       method: 'POST',
@@ -476,6 +676,7 @@ const main = async () => {
       },
     });
     assertStatus(categoryCreateForbidden, 403, 'category create forbidden');
+    assertNoRawErrorDetails(categoryCreateForbidden.payload, 'category create forbidden error');
 
     const categoryCreateAdmin = await request('/api/categories', {
       method: 'POST',
@@ -486,6 +687,10 @@ const main = async () => {
       },
     });
     assertStatus(categoryCreateAdmin, 201, 'category create admin');
+    const categoryListAfterCreate = await request('/api/categories');
+    assertStatus(categoryListAfterCreate, 200, 'category list after create');
+    assert(Array.isArray(categoryListAfterCreate.payload?.data), 'category list after create data');
+    assert(categoryListAfterCreate.payload.data.some((category) => category.name === `Smoke Category ${runId}`), 'category list contains admin-created category');
     logStep('category list/create permissions verified');
 
     console.log('Backend smoke test passed');

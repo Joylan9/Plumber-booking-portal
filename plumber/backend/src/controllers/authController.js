@@ -7,7 +7,7 @@ const { createHttpError } = require('../utils/httpError');
 
 const GENERIC_RESET_MESSAGE = 'If an account matches that email, reset instructions have been sent.';
 
-const normalizeEmail = (email = '') => email.trim().toLowerCase();
+const normalizeEmail = (email) => (typeof email === 'string' ? email.trim().toLowerCase() : '');
 const normalizeOptionalString = (value) => (typeof value === 'string' ? value.trim() : '');
 const normalizeServices = (services) => {
   if (!Array.isArray(services)) {
@@ -23,7 +23,14 @@ const normalizeServices = (services) => {
 
 const hashResetToken = (token) => crypto.createHash('sha256').update(token).digest('hex');
 
-const getFrontendUrl = () => (process.env.FRONTEND_URL || 'http://localhost:5173').replace(/\/$/, '');
+const getFrontendUrl = () => {
+  const origins = String(process.env.FRONTEND_URL || '')
+    .split(',')
+    .map((origin) => normalizeOptionalString(origin).replace(/\/$/, ''))
+    .filter(Boolean);
+
+  return origins[0] || 'http://localhost:5173';
+};
 
 const getAuthResponse = (user) => sanitizeUser(user, generateToken(user._id, user.role));
 const canSendResetEmail = () => (
@@ -234,9 +241,9 @@ const forgotPassword = async (req, res, next) => {
       } else if (process.env.NODE_ENV === 'production') {
         throw createHttpError(500, 'Password reset email service is not configured');
       } else if (shouldLogResetDetails()) {
-        console.warn('⚠️ SMTP credentials not found in .env! Email dispatch bypassed.');
-        console.log(`[SIMULATED EMAIL] OTP: ${resetToken}`);
-        console.log(`[SIMULATED EMAIL] URL: ${resetUrl}`);
+        console.warn('SMTP credentials not found in .env. Email dispatch bypassed for local development.');
+        console.log(`[DEV RESET OTP] ${resetToken}`);
+        console.log(`[DEV RESET URL] ${resetUrl}`);
       }
 
       return res.status(200).json({

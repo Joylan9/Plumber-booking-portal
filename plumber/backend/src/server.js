@@ -1,6 +1,7 @@
 const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
+const path = require('path');
 const connectDB = require('./config/db');
 const { notFound, errorHandler } = require('./middleware/errorMiddleware');
 const { createHttpError } = require('./utils/httpError');
@@ -11,6 +12,7 @@ const plumberRoutes = require('./routes/plumberRoutes');
 const bookingRoutes = require('./routes/bookingRoutes');
 const reviewRoutes = require('./routes/reviewRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
+const userRoutes = require('./routes/userRoutes');
 
 // Load env vars
 dotenv.config();
@@ -40,6 +42,7 @@ app.use(cors({
     return callback(createHttpError(403, 'Origin not allowed by CORS'));
   },
 }));
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Mount routers
 app.use('/api/auth', authRoutes);
@@ -47,6 +50,7 @@ app.use('/api/plumbers', plumberRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/categories', categoryRoutes);
+app.use('/api/users', userRoutes);
 
 // Root route
 app.get('/', (req, res) => {

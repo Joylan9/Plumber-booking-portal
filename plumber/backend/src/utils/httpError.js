@@ -81,6 +81,18 @@ const normalizeError = (error) => {
     return createHttpError(400, `Invalid ${error.path}`, error.path);
   }
 
+  if (error.name === 'MulterError') {
+    if (error.code === 'LIMIT_FILE_SIZE') {
+      return createHttpError(400, 'Avatar image must be 2MB or smaller', 'avatar');
+    }
+
+    return createHttpError(400, error.message || 'Invalid file upload', 'avatar');
+  }
+
+  if (hasMessageFragment(error, 'images only')) {
+    return createHttpError(400, 'Only JPG and PNG images are allowed', 'avatar');
+  }
+
   if (isDatabaseUnavailableError(error)) {
     return createHttpError(503, 'Database service is temporarily unavailable. Please try again in a moment.');
   }

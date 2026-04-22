@@ -10,6 +10,7 @@ const sanitizeUser = (user, token) => {
     role: user.role,
     phone: user.phone || '',
     area: user.area || '',
+    profileImage: user.profileImage || '',
     bio: user.bio || '',
     experience: user.experience ?? null,
     hourlyRate: user.hourlyRate ?? null,

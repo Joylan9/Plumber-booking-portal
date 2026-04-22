@@ -1,6 +1,8 @@
 const dotenv = require('dotenv');
+const fs = require('fs/promises');
 const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
+const path = require('path');
 const connectDB = require('../config/db');
 const User = require('../models/User');
 const Booking = require('../models/Booking');
@@ -20,16 +22,18 @@ const state = {
   admin: null,
   bookingId: null,
   reviewId: null,
+  avatarPaths: [],
 };
 
 const request = async (path, { method = 'GET', token, body } = {}) => {
+  const isFormData = typeof FormData !== 'undefined' && body instanceof FormData;
   const response = await fetch(`${BASE_URL}${path}`, {
     method,
     headers: {
-      'Content-Type': 'application/json',
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(!isFormData ? { 'Content-Type': 'application/json' } : {}),
     },
-    ...(body ? { body: JSON.stringify(body) } : {}),
+    ...(body ? { body: isFormData ? body : JSON.stringify(body) } : {}),
   });
 
   const text = await response.text();
@@ -62,6 +66,14 @@ const assert = (condition, label) => {
 
 const logStep = (message) => {
   console.log(`- ${message}`);
+};
+
+const getUploadFilePath = (avatarPath) => {
+  if (typeof avatarPath !== 'string' || !avatarPath.startsWith('/uploads/')) {
+    return null;
+  }
+
+  return path.join(__dirname, '../../uploads', path.basename(avatarPath));
 };
 
 const createApiUser = async ({ name, role, password, extra = {} }) => {
@@ -140,6 +152,13 @@ const cleanupArtifacts = async () => {
   if (ids.length) {
     await User.deleteMany({ _id: { $in: ids } });
   }
+
+  await Promise.allSettled(
+    state.avatarPaths
+      .map((avatarPath) => getUploadFilePath(avatarPath))
+      .filter(Boolean)
+      .map((filePath) => fs.rm(filePath, { force: true }))
+  );
 };
 
 const main = async () => {
@@ -247,6 +266,55 @@ const main = async () => {
     state.customer = resetTokenPutResult.payload.data;
     await loginApiUser({ email: customerSeed.email, password: 'Customer999!' });
     logStep('password reset OTP and token route compatibility verified');
+
+    const customerProfileUpdate = await request('/api/users/profile', {
+      method: 'PUT',
+      token: state.customer.token,
+      body: {
+        name: 'Smoke Customer Updated',
+        phone: '7777777777',
+        area: 'Updated Customer Area',
+        bio: 'Customer profile update from smoke test.',
+      },
+    });
+    assertStatus(customerProfileUpdate, 200, 'customer profile update');
+    assert(customerProfileUpdate.payload?.data?.name === 'Smoke Customer Updated', 'customer profile name updated');
+    state.customer = { ...state.customer, ...customerProfileUpdate.payload.data };
+
+    const plumberProfileUpdate = await request('/api/users/profile', {
+      method: 'PUT',
+      token: state.plumber.token,
+      body: {
+        name: 'Smoke Plumber Updated',
+        phone: '9999999998',
+        area: 'Updated Plumber Area',
+        bio: 'Plumber profile update from smoke test.',
+        experience: 6,
+        hourlyRate: 85,
+        services: ['Leak Repair', 'Emergency'],
+      },
+    });
+    assertStatus(plumberProfileUpdate, 200, 'plumber profile update');
+    assert(plumberProfileUpdate.payload?.data?.services?.includes('Emergency'), 'plumber profile services updated');
+    state.plumber = { ...state.plumber, ...plumberProfileUpdate.payload.data };
+
+    const avatarForm = new FormData();
+    avatarForm.append('avatar', new Blob(['flowmatch-avatar'], { type: 'image/png' }), 'avatar.png');
+    const avatarUpload = await request('/api/users/upload-avatar', {
+      method: 'POST',
+      token: state.customer.token,
+      body: avatarForm,
+    });
+    assertStatus(avatarUpload, 200, 'avatar upload');
+    assert(avatarUpload.payload?.data?.profileImage?.startsWith('/uploads/'), 'avatar upload profile image path');
+    state.customer = { ...state.customer, ...avatarUpload.payload.data };
+    state.avatarPaths.push(avatarUpload.payload.data.profileImage);
+
+    const avatarAssetResponse = await fetch(`${BASE_URL}${avatarUpload.payload.data.profileImage}`);
+    if (!avatarAssetResponse.ok) {
+      throw new Error(`avatar static file failed: expected 200, received ${avatarAssetResponse.status}`);
+    }
+    logStep('profile update and avatar upload routes verified');
 
     const missingTokenResult = await request('/api/bookings');
     assertStatus(missingTokenResult, 401, 'missing token rejected');

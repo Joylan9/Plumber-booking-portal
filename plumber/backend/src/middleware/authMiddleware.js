@@ -2,7 +2,7 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const { createHttpError } = require('../utils/httpError');
 
-const AUTH_USER_SELECT = '_id name email role phone area bio experience hourlyRate services availability rating totalReviews';
+const AUTH_USER_SELECT = '_id name email role phone area profileImage bio experience hourlyRate services availability rating totalReviews';
 
 const protectRoute = async (req, res, next) => {
   try {
@@ -47,4 +47,8 @@ const authorizeRoles = (...roles) => {
   };
 };
 
-module.exports = { protectRoute, authorizeRoles };
+module.exports = {
+  protectRoute,
+  protect: protectRoute,
+  authorizeRoles,
+};

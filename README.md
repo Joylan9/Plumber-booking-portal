@@ -221,14 +221,19 @@ GET    /api/reviews/plumber/:plumberId
 
 GET    /api/categories
 POST   /api/categories
+
+PUT    /api/users/profile
+POST   /api/users/upload-avatar
 ```
 
 ### Deployment Notes
 - Use `MONGO_URI` or `MONGODB_URI` for the backend database connection.
 - Set `FRONTEND_URL` to the deployed frontend origin so CORS allows the production app. You can provide a comma-separated allowlist if you need multiple frontend origins.
+- When `FRONTEND_URL` contains multiple origins, the first origin is used for password reset links.
 - The booking API derives `serviceType` from the selected plumber's first service when the frontend does not send one, and falls back to `General Plumbing`.
 - Leave `ENABLE_DEV_EMAIL_LOGS=false` unless you explicitly want local reset OTP/link logging for debugging.
 - Use `npm run seed:categories` to preload the default plumbing service categories.
+- Uploaded avatars are served from `/uploads/*`; the backend now keeps `backend/uploads/` ignored in git.
 - The repo now ignores `plumber/Database/`; use MongoDB Atlas or another managed MongoDB deployment for production.
 
 ---

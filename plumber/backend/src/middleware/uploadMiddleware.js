@@ -20,14 +20,15 @@ const storage = multer.diskStorage({
 
 const checkFileType = (file, cb) => {
   const filetypes = /jpg|jpeg|png/;
+  const validMimeTypes = new Set(['image/jpeg', 'image/png']);
   const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
-  const mimetype = filetypes.test(file.mimetype);
+  const mimetype = validMimeTypes.has(file.mimetype);
 
   if (extname && mimetype) {
     return cb(null, true);
-  } else {
-    cb(new Error('Images only (jpg, jpeg, png)!'));
   }
+
+  return cb(new Error('Images only (jpg, jpeg, png)!'));
 };
 
 const upload = multer({

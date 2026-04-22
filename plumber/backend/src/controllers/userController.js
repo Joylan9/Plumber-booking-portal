@@ -1,5 +1,32 @@
 const User = require('../models/User');
+const sanitizeUser = require('../utils/sanitizeUser');
 const { createHttpError } = require('../utils/httpError');
+
+const normalizeString = (value) => (typeof value === 'string' ? value.trim() : '');
+const normalizeServices = (services) => {
+  if (!Array.isArray(services)) {
+    return [];
+  }
+
+  return [...new Set(
+    services
+      .map((service) => normalizeString(service))
+      .filter(Boolean)
+  )];
+};
+
+const parseNonNegativeNumber = (value, field) => {
+  if (value === undefined) {
+    return { hasValue: false, value: undefined };
+  }
+
+  const parsedValue = Number(value);
+  if (!Number.isFinite(parsedValue) || parsedValue < 0) {
+    throw createHttpError(400, `${field} must be a non-negative number`, field);
+  }
+
+  return { hasValue: true, value: parsedValue };
+};
 
 const updateProfile = async (req, res, next) => {
   try {
@@ -9,40 +36,50 @@ const updateProfile = async (req, res, next) => {
       return next(createHttpError(404, 'User not found'));
     }
 
-    // Allowed fields to update
-    if (req.body.name) user.name = req.body.name;
-    if (req.body.phone !== undefined) user.phone = req.body.phone;
-    if (req.body.area !== undefined) user.area = req.body.area;
-    if (req.body.bio !== undefined) user.bio = req.body.bio;
+    if (req.body.name !== undefined) {
+      const name = normalizeString(req.body.name);
 
-    // Plumber specific fields
+      if (!name) {
+        return next(createHttpError(400, 'Name is required', 'name'));
+      }
+
+      user.name = name;
+    }
+
+    if (req.body.phone !== undefined) user.phone = normalizeString(req.body.phone);
+    if (req.body.area !== undefined) user.area = normalizeString(req.body.area);
+    if (req.body.bio !== undefined) user.bio = normalizeString(req.body.bio);
+    if (req.body.availability !== undefined) user.availability = normalizeString(req.body.availability);
+
     if (user.role === 'plumber') {
-      if (req.body.experience !== undefined) user.experience = Number(req.body.experience);
-      if (req.body.hourlyRate !== undefined) user.hourlyRate = Number(req.body.hourlyRate);
-      if (req.body.services !== undefined && Array.isArray(req.body.services)) {
-        user.services = req.body.services;
+      const experience = parseNonNegativeNumber(req.body.experience, 'experience');
+      const hourlyRate = parseNonNegativeNumber(req.body.hourlyRate, 'hourlyRate');
+
+      if (experience.hasValue) {
+        user.experience = experience.value;
+      }
+
+      if (hourlyRate.hasValue) {
+        user.hourlyRate = hourlyRate.value;
+      }
+
+      if (req.body.services !== undefined) {
+        const services = normalizeServices(req.body.services);
+
+        if (services.length === 0) {
+          return next(createHttpError(400, 'At least one service is required for plumbers', 'services'));
+        }
+
+        user.services = services;
       }
     }
 
     const updatedUser = await user.save();
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
-      data: {
-        _id: updatedUser._id,
-        name: updatedUser.name,
-        email: updatedUser.email,
-        role: updatedUser.role,
-        phone: updatedUser.phone,
-        area: updatedUser.area,
-        bio: updatedUser.bio,
-        experience: updatedUser.experience,
-        hourlyRate: updatedUser.hourlyRate,
-        services: updatedUser.services,
-        profileImage: updatedUser.profileImage,
-        rating: updatedUser.rating,
-        totalReviews: updatedUser.totalReviews
-      },
+      data: sanitizeUser(updatedUser),
+      message: 'Profile updated successfully',
     });
   } catch (error) {
     return next(error);
@@ -52,7 +89,7 @@ const updateProfile = async (req, res, next) => {
 const uploadAvatar = async (req, res, next) => {
   try {
     if (!req.file) {
-      return next(createHttpError(400, 'No image file provided'));
+      return next(createHttpError(400, 'No image file provided', 'avatar'));
     }
 
     const user = await User.findById(req.user._id);
@@ -64,11 +101,9 @@ const uploadAvatar = async (req, res, next) => {
     user.profileImage = `/uploads/${req.file.filename}`;
     await user.save();
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
-      data: {
-        profileImage: user.profileImage,
-      },
+      data: sanitizeUser(user),
       message: 'Avatar uploaded successfully',
     });
   } catch (error) {

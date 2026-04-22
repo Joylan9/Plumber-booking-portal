@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
+import { forgotPassword, resetPassword } from '../services/authService';
 import './Auth.css';
 
 const EyeIcon = ({ show }) => (
@@ -44,13 +44,13 @@ const ForgotPassword = () => {
     setIsSubmitting(true);
     
     try {
-      const { data } = await axios.post('http://localhost:5000/api/auth/forgot-password', { email });
+      const data = await forgotPassword(email);
       setIsError(false);
       setStatusMsg(data.message);
       setStep(2); // Morph layout to OTP and new password step
     } catch (err) {
       setIsError(true);
-      setStatusMsg(err.response?.data?.message || 'Failed to dispatch verification code');
+      setStatusMsg(err.message || 'Failed to dispatch verification code');
     } finally {
       setIsSubmitting(false);
     }
@@ -63,17 +63,13 @@ const ForgotPassword = () => {
     setIsSubmitting(true);
 
     try {
-      const { data } = await axios.post('http://localhost:5000/api/auth/reset-password', { 
-        email, 
-        otp, 
-        password: newPassword 
-      });
+      await resetPassword({ email, otp, password: newPassword });
       setIsError(false);
       setStatusMsg('Password securely reset! You may now login.');
       setStep(3); // Success Screen
     } catch (err) {
       setIsError(true);
-      setStatusMsg(err.response?.data?.message || 'Invalid or expired Verification Code');
+      setStatusMsg(err.message || 'Invalid or expired Verification Code');
     } finally {
       setIsSubmitting(false);
     }
@@ -112,7 +108,7 @@ const ForgotPassword = () => {
                 initial={{ opacity: 0, y: -15, height: 0 }}
                 animate={{ opacity: 1, y: 0, height: 'auto' }}
                 exit={{ opacity: 0, scale: 0.95, height: 0 }}
-                style={!isError ? { background: '#E8F5E9', color: '#2E7D32', border: '1px solid #4CAF50', padding: '12px', borderRadius: '6px', marginBottom: '24px', fontSize: '0.9rem' } : {}}
+                style={!isError ? { background: '#E8F5E9', color: 'var(--confirm-green)', border: '1px solid var(--confirm-green)', padding: '12px', borderRadius: '6px', marginBottom: '24px', fontSize: '0.9rem' } : {}}
               >
                 {statusMsg}
               </motion.div>
@@ -221,7 +217,7 @@ const ForgotPassword = () => {
               <motion.div 
                 animate={{ scale: [0.8, 1.1, 1] }} 
                 transition={{ duration: 0.5 }}
-                style={{ fontSize: '4rem', color: '#4CAF50', marginBottom: '20px', display: 'inline-block' }}
+                style={{ fontSize: '4rem', color: 'var(--confirm-green)', marginBottom: '20px', display: 'inline-block' }}
               >
                 ✓
               </motion.div>

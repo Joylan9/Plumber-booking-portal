@@ -1,0 +1,66 @@
+.skeleton-line {
+  height: 14px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--mist) 25%, #dde8f0 50%, var(--mist) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  margin-bottom: 10px;
+}
+
+.skeleton-short { width: 40%; }
+.skeleton-medium { width: 65%; }
+.skeleton-wide { width: 90%; }
+.skeleton-number { height: 28px; width: 50%; margin-top: 8px; }
+
+/* Stats layout */
+.skeleton-stats-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.skeleton-stat-card {
+  background: var(--card-white);
+  border: 1px solid var(--sky);
+  border-radius: 8px;
+  padding: 20px 16px;
+}
+
+/* Card grid layout */
+.skeleton-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.skeleton-card-item {
+  background: var(--card-white);
+  border: 1px solid var(--sky);
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.skeleton-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(90deg, var(--mist) 25%, #dde8f0 50%, var(--mist) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  margin-bottom: 14px;
+}
+
+/* List layout */
+.skeleton-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.skeleton-row {
+  background: var(--card-white);
+  border: 1px solid var(--sky);
+  border-radius: 8px;
+  padding: 16px 20px;
+}

@@ -21,7 +21,7 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Password is required'],
     minlength: [6, 'Password must be at least 6 characters'],
-    select: false, // Don't return password in queries by default
+    select: false,
   },
   role: {
     type: String,
@@ -37,7 +37,6 @@ const userSchema = new mongoose.Schema({
   profileImage: {
     type: String,
   },
-  // --- Plumber-specific fields ---
   bio: {
     type: String,
   },
@@ -49,6 +48,7 @@ const userSchema = new mongoose.Schema({
   },
   services: {
     type: [String],
+    default: [],
   },
   availability: {
     type: String,
@@ -69,12 +69,16 @@ const userSchema = new mongoose.Schema({
   resetPasswordExpire: Date,
 }, {
   timestamps: true,
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true },
 });
 
 // Conditional Valdiations for Plumbers
 userSchema.pre('validate', function () {
   if (this.role === 'plumber') {
-    if (!this.experience) this.invalidate('experience', 'Experience is required for plumbers');
+    if (this.experience === undefined || this.experience === null) {
+      this.invalidate('experience', 'Experience is required for plumbers');
+    }
     if (this.hourlyRate === undefined) this.invalidate('hourlyRate', 'Hourly rate is required for plumbers');
     if (!this.services || this.services.length === 0) this.invalidate('services', 'At least one service required for plumbers');
   }
@@ -109,6 +113,32 @@ userSchema.methods.getResetPasswordToken = function () {
   this.resetPasswordExpire = Date.now() + 10 * 60 * 1000;
 
   return otp;
+};
+
+userSchema.virtual('averageRating').get(function () {
+  return this.rating;
+});
+
+userSchema.statics.getAverageRating = async function (plumberId) {
+  const [result] = await mongoose.model('Review').aggregate([
+    {
+      $match: {
+        plumberId: new mongoose.Types.ObjectId(plumberId),
+      },
+    },
+    {
+      $group: {
+        _id: '$plumberId',
+        averageRating: { $avg: '$rating' },
+        totalReviews: { $sum: 1 },
+      },
+    },
+  ]);
+
+  return {
+    averageRating: result ? Number(result.averageRating.toFixed(1)) : 0,
+    totalReviews: result ? result.totalReviews : 0,
+  };
 };
 
 const User = mongoose.model('User', userSchema);

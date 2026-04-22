@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
+import { resetPassword } from '../services/authService';
 import './Auth.css';
 
 const ResetPassword = () => {
   const { token } = useParams();
   const navigate = useNavigate();
   
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   
@@ -19,21 +20,21 @@ const ResetPassword = () => {
     setError(null);
     
     if (password !== confirmPassword) {
-      setError("Passwords do not actively match.");
+      setError("Passwords do not match.");
       return;
     }
     
     setIsSubmitting(true);
     
     try {
-      const { data } = await axios.post(`http://localhost:5000/api/auth/reset-password/${token}`, { password });
+      const data = await resetPassword({ email, otp: token, password });
 
       if (data.success) {
         // Automatically redirect to log in securely
         setTimeout(() => navigate('/login'), 1500);
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Password reset structurally failed');
+      setError(err.message || 'Password reset failed');
       setIsSubmitting(false);
     }
   };
@@ -57,7 +58,7 @@ const ResetPassword = () => {
       <div className="auth-form-panel">
         <div className="auth-card">
           <h2 className="auth-title">Set New Password</h2>
-          <p className="auth-subtitle">Provide your newly requested secure parameters</p>
+          <p className="auth-subtitle">Provide your email and new secure password</p>
           
           <AnimatePresence>
             {error && (
@@ -73,6 +74,19 @@ const ResetPassword = () => {
           </AnimatePresence>
 
           <form onSubmit={submitHandler} className="auth-form">
+            <div className="form-group">
+              <label>Email Address</label>
+              <div className="input-wrapper">
+                <input 
+                  type="email" 
+                  className="premium-input animated-underline" 
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </div>
+            </div>
+
             <div className="form-group">
               <label>New Password</label>
               <div className="input-wrapper">

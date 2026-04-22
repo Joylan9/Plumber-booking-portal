@@ -1,0 +1,19 @@
+import './ErrorState.css';
+
+export default function ErrorState({ message = 'Something went wrong', onRetry }) {
+  return (
+    <div className="error-state card-panel">
+      <svg className="error-state-icon" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="10" />
+        <line x1="15" y1="9" x2="9" y2="15" />
+        <line x1="9" y1="9" x2="15" y2="15" />
+      </svg>
+      <p className="error-state-message">{message}</p>
+      {onRetry && (
+        <button className="btn-outline error-state-btn" onClick={onRetry}>
+          Try Again
+        </button>
+      )}
+    </div>
+  );
+}

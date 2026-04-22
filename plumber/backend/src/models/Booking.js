@@ -11,6 +11,11 @@ const bookingSchema = new mongoose.Schema({
     ref: 'User',
     required: [true, 'Plumber ID is required'],
   },
+  serviceType: {
+    type: String,
+    required: [true, 'Service type is required'],
+    trim: true,
+  },
   date: {
     type: Date,
     required: [true, 'Booking date is required'],
@@ -53,6 +58,9 @@ const bookingSchema = new mongoose.Schema({
 }, {
   timestamps: true,
 });
+
+bookingSchema.index({ customerId: 1, status: 1 });
+bookingSchema.index({ plumberId: 1, status: 1 });
 
 const Booking = mongoose.model('Booking', bookingSchema);
 

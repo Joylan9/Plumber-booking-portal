@@ -1,8 +1,8 @@
 import { useState, useContext, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AuthContext } from '../context/AuthContext';
+import { register as registerApi } from '../services/authService';
 import './Auth.css';
 
 const EyeIcon = ({ show }) => (
@@ -117,14 +117,14 @@ const Register = () => {
         payload.services = formData.services.split(',').map(s => s.trim()).filter(Boolean);
       }
 
-      const { data } = await axios.post('http://localhost:5000/api/auth/register', payload);
+      const data = await registerApi(payload);
 
       if (data.success) {
         login(data.data);
         setTimeout(() => navigate('/dashboard'), 600);
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Registration failed processing form');
+      setError(err.message || 'Registration failed processing form');
       setIsSubmitting(false);
     }
   };
@@ -155,10 +155,10 @@ const Register = () => {
       <div className="auth-form-panel">
         <div className="auth-card" style={{ maxWidth: '440px', width: '100%' }}>
           <h2 className="auth-title">Create Account</h2>
-          <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
-            <div style={{ height: '4px', background: step >= 1 ? '#4CAF50' : '#e0e0e0', flex: 1, borderRadius: '2px', transition: '0.4s' }} />
-            <div style={{ height: '4px', background: step >= 2 ? '#4CAF50' : '#e0e0e0', flex: 1, borderRadius: '2px', transition: '0.4s' }} />
-            <div style={{ height: '4px', background: step >= 3 ? '#4CAF50' : formData.role === 'customer' ? 'transparent' : '#e0e0e0', flex: 1, borderRadius: '2px', transition: '0.4s' }} />
+          <div className="register-steps" style={{ display: 'flex', gap: '8px', marginBottom: '20px', overflowX: 'auto' }}>
+            <div style={{ height: '4px', background: step >= 1 ? 'var(--confirm-green)' : '#e0e0e0', flex: 1, borderRadius: '2px', transition: '0.4s', minWidth: '40px' }} />
+            <div style={{ height: '4px', background: step >= 2 ? 'var(--confirm-green)' : '#e0e0e0', flex: 1, borderRadius: '2px', transition: '0.4s', minWidth: '40px' }} />
+            <div style={{ height: '4px', background: step >= 3 ? 'var(--confirm-green)' : formData.role === 'customer' ? 'transparent' : '#e0e0e0', flex: 1, borderRadius: '2px', transition: '0.4s', minWidth: '40px' }} />
           </div>
           
           <AnimatePresence mode="wait">
@@ -205,10 +205,10 @@ const Register = () => {
                     </div>
                     {/* Password Strength Indicator */}
                     <div style={{ marginTop: '8px', display: 'flex', gap: '4px', alignItems: 'center' }}>
-                      <div style={{ height: '4px', flex: 1, borderRadius: '2px', background: passwordStrength >= 25 ? (passwordStrength === 100 ? '#4CAF50' : '#FFC107') : '#e0e0e0', transition: '0.3s' }}/>
-                      <div style={{ height: '4px', flex: 1, borderRadius: '2px', background: passwordStrength >= 50 ? (passwordStrength === 100 ? '#4CAF50' : '#FFC107') : '#e0e0e0', transition: '0.3s' }}/>
-                      <div style={{ height: '4px', flex: 1, borderRadius: '2px', background: passwordStrength >= 75 ? (passwordStrength === 100 ? '#4CAF50' : '#FFC107') : '#e0e0e0', transition: '0.3s' }}/>
-                      <div style={{ height: '4px', flex: 1, borderRadius: '2px', background: passwordStrength >= 100 ? '#4CAF50' : '#e0e0e0', transition: '0.3s' }}/>
+                      <div style={{ height: '4px', flex: 1, borderRadius: '2px', background: passwordStrength >= 25 ? (passwordStrength === 100 ? 'var(--confirm-green)' : 'var(--amber-cta)') : '#e0e0e0', transition: '0.3s' }}/>
+                      <div style={{ height: '4px', flex: 1, borderRadius: '2px', background: passwordStrength >= 50 ? (passwordStrength === 100 ? 'var(--confirm-green)' : 'var(--amber-cta)') : '#e0e0e0', transition: '0.3s' }}/>
+                      <div style={{ height: '4px', flex: 1, borderRadius: '2px', background: passwordStrength >= 75 ? (passwordStrength === 100 ? 'var(--confirm-green)' : 'var(--amber-cta)') : '#e0e0e0', transition: '0.3s' }}/>
+                      <div style={{ height: '4px', flex: 1, borderRadius: '2px', background: passwordStrength >= 100 ? 'var(--confirm-green)' : '#e0e0e0', transition: '0.3s' }}/>
                     </div>
                   </div>
                 </motion.div>
@@ -217,28 +217,30 @@ const Register = () => {
               {step === 2 && (
                 <motion.div key="step2" variants={stepVariants} initial="hidden" animate="visible" exit="exit">
                   <p className="auth-subtitle">Step 2: Platform Identity</p>
-                  <label style={{ display: 'block', marginBottom: '12px', fontWeight: '500', color: 'var(--text-color)' }}>I am looking to...</label>
+                  <label style={{ display: 'block', marginBottom: '12px', fontWeight: '500', color: 'var(--navy)' }}>I am looking to...</label>
                   
                   <div style={{ display: 'flex', gap: '16px', flexDirection: 'column' }}>
                     <div 
                       onClick={() => setFormData({...formData, role: 'customer'})}
-                      style={{ border: formData.role === 'customer' ? '2px solid #4CAF50' : '2px solid #e0e0e0', background: formData.role === 'customer' ? '#f1f8f5' : '#fff', padding: '20px', borderRadius: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '16px', transition: 'all 0.2s ease' }}
+                      className="card-panel"
+                      style={{ border: formData.role === 'customer' ? '2px solid var(--confirm-green)' : '2px solid var(--sky)', background: formData.role === 'customer' ? '#f1f8f5' : 'var(--card-white)', padding: '20px', borderRadius: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '16px', transition: 'all 0.2s ease' }}
                     >
-                      <div style={{ color: formData.role === 'customer' ? '#4CAF50' : '#888' }}><UserIcon/></div>
+                      <div style={{ color: formData.role === 'customer' ? 'var(--confirm-green)' : 'var(--muted)' }}><UserIcon/></div>
                       <div>
-                        <h4 style={{ margin: 0, color: '#333', fontSize: '1.1rem' }}>Book Services</h4>
-                        <p style={{ margin: '4px 0 0', color: '#666', fontSize: '0.85rem' }}>I need to hire a professional plumber</p>
+                        <h4 style={{ margin: 0, color: 'var(--navy)', fontSize: '1.1rem' }}>Book Services</h4>
+                        <p style={{ margin: '4px 0 0', color: 'var(--muted)', fontSize: '0.85rem' }}>I need to hire a professional plumber</p>
                       </div>
                     </div>
 
                     <div 
                       onClick={() => setFormData({...formData, role: 'plumber'})}
-                      style={{ border: formData.role === 'plumber' ? '2px solid #4CAF50' : '2px solid #e0e0e0', background: formData.role === 'plumber' ? '#f1f8f5' : '#fff', padding: '20px', borderRadius: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '16px', transition: 'all 0.2s ease' }}
+                      className="card-panel"
+                      style={{ border: formData.role === 'plumber' ? '2px solid var(--confirm-green)' : '2px solid var(--sky)', background: formData.role === 'plumber' ? '#f1f8f5' : 'var(--card-white)', padding: '20px', borderRadius: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '16px', transition: 'all 0.2s ease' }}
                     >
-                      <div style={{ color: formData.role === 'plumber' ? '#4CAF50' : '#888' }}><WrenchIcon/></div>
+                      <div style={{ color: formData.role === 'plumber' ? 'var(--confirm-green)' : 'var(--muted)' }}><WrenchIcon/></div>
                       <div>
-                        <h4 style={{ margin: 0, color: '#333', fontSize: '1.1rem' }}>Provide Services</h4>
-                        <p style={{ margin: '4px 0 0', color: '#666', fontSize: '0.85rem' }}>I am a plumber accepting clients</p>
+                        <h4 style={{ margin: 0, color: 'var(--navy)', fontSize: '1.1rem' }}>Provide Services</h4>
+                        <p style={{ margin: '4px 0 0', color: 'var(--muted)', fontSize: '0.85rem' }}>I am a plumber accepting clients</p>
                       </div>
                     </div>
                   </div>
@@ -277,7 +279,7 @@ const Register = () => {
 
             <div style={{ marginTop: '24px', display: 'flex', gap: '12px' }}>
               {step > 1 && (
-                <button type="button" onClick={() => setStep(step - 1)} className="btn-secondary" style={{ padding: '12px 24px', borderRadius: '8px', border: '1px solid #ccc', background: '#fff', cursor: 'pointer', fontWeight: 'bold', color: '#555' }}>
+                <button type="button" onClick={() => setStep(step - 1)} className="btn-outline" style={{ padding: '12px 24px' }}>
                   Back
                 </button>
               )}

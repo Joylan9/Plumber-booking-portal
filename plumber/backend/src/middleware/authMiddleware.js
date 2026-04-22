@@ -1,57 +1,39 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const { createHttpError } = require('../utils/httpError');
 
 const protectRoute = async (req, res, next) => {
-  let token;
+  try {
+    const authHeader = req.headers.authorization || '';
 
-  if (
-    req.headers.authorization &&
-    req.headers.authorization.startsWith('Bearer')
-  ) {
-    try {
-      // Get token from header (Format: "Bearer <token>")
-      token = req.headers.authorization.split(' ')[1];
-
-      // Verify token
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-      // Get user from the token payload and attach it to req
-      req.user = await User.findById(decoded.id).select('-password');
-
-      if (!req.user) {
-        return res.status(401).json({
-          success: false,
-          message: 'Not authorized, user not found',
-        });
-      }
-
-      next();
-    } catch (error) {
-      console.error(error);
-      res.status(401).json({
-        success: false,
-        message: 'Not authorized, token failed',
-      });
+    if (!authHeader.startsWith('Bearer ')) {
+      return next(createHttpError(401, 'Not authorized, no token'));
     }
-  }
 
-  if (!token) {
-    res.status(401).json({
-      success: false,
-      message: 'Not authorized, no token',
-    });
+    const token = authHeader.split(' ')[1];
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    req.user = await User.findById(decoded.id).select('-password');
+
+    if (!req.user) {
+      return next(createHttpError(401, 'Not authorized, user not found'));
+    }
+
+    return next();
+  } catch (error) {
+    return next(createHttpError(401, 'Not authorized, token failed'));
   }
 };
 
 const authorizeRoles = (...roles) => {
   return (req, res, next) => {
     if (!req.user || !roles.includes(req.user.role)) {
-      return res.status(403).json({
-        success: false,
-        message: `Role (${req.user ? req.user.role : 'unknown'}) is not authorized to access this route`,
-      });
+      return next(createHttpError(
+        403,
+        `Role (${req.user ? req.user.role : 'unknown'}) is not authorized to access this route`
+      ));
     }
-    next();
+    return next();
   };
 };
 

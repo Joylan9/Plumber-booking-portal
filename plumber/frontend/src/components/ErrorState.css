@@ -1,0 +1,29 @@
+.error-state {
+  text-align: center;
+  padding: 32px 24px;
+  max-width: 400px;
+  margin: 24px auto;
+}
+
+.error-state-icon {
+  margin-bottom: 12px;
+}
+
+.error-state-message {
+  color: var(--danger);
+  font-size: 0.92rem;
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+
+.error-state-btn {
+  padding: 8px 24px;
+  font-size: 0.85rem;
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.error-state-btn:hover {
+  background: var(--danger);
+  color: #fff;
+}

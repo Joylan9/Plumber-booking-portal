@@ -1,8 +1,8 @@
 import { useState, useContext } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AuthContext } from '../context/AuthContext';
+import { login as loginApi } from '../services/authService';
 import './Auth.css';
 
 const EyeIcon = ({ show }) => (
@@ -36,10 +36,7 @@ const Login = () => {
     setError(null);
     setIsSubmitting(true);
     try {
-      const { data } = await axios.post('http://localhost:5000/api/auth/login', {
-        email,
-        password,
-      });
+      const data = await loginApi({ email, password });
 
       if (data.success) {
         login(data.data);
@@ -47,7 +44,7 @@ const Login = () => {
         setTimeout(() => navigate('/dashboard'), 600);
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Login failed');
+      setError(err.message || 'Login failed');
       setIsSubmitting(false);
     }
   };
@@ -98,7 +95,6 @@ const Login = () => {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                 />
-                <motion.div className="focus-line" layoutId="focus-line"></motion.div>
               </div>
             </div>
 

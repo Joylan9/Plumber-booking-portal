@@ -1,259 +1,268 @@
+const crypto = require('crypto');
 const User = require('../models/User');
 const generateToken = require('../utils/generateToken');
-const crypto = require('crypto');
+const sendEmail = require('../utils/sendEmail');
+const sanitizeUser = require('../utils/sanitizeUser');
+const { createHttpError } = require('../utils/httpError');
+
+const GENERIC_RESET_MESSAGE = 'If an account matches that email, reset instructions have been sent.';
+
+const normalizeEmail = (email = '') => email.trim().toLowerCase();
+
+const hashResetToken = (token) => crypto.createHash('sha256').update(token).digest('hex');
+
+const getFrontendUrl = () => (process.env.FRONTEND_URL || 'http://localhost:5173').replace(/\/$/, '');
+
+const getAuthResponse = (user) => sanitizeUser(user, generateToken(user._id, user.role));
+
+const resetPasswordEmailTemplate = ({ name, otp, resetUrl }) => `
+  <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden;">
+    <div style="background-color: #0A2540; padding: 24px; text-align: center;">
+      <h2 style="color: #ffffff; margin: 0;">FlowMatch Password Reset</h2>
+    </div>
+    <div style="padding: 28px; background-color: #f8fafc;">
+      <p style="color: #1f2937; line-height: 1.6; margin-top: 0;">Hello ${name},</p>
+      <p style="color: #4b5563; line-height: 1.6;">
+        Use the verification code below or open the reset link to set a new password. Both options expire in 10 minutes.
+      </p>
+      <div style="text-align: center; margin: 28px 0;">
+        <div style="background-color: #fff7e6; border: 1px dashed #F0A500; color: #0A2540; padding: 16px 24px; border-radius: 10px; font-size: 30px; font-weight: 700; letter-spacing: 6px; display: inline-block;">
+          ${otp}
+        </div>
+      </div>
+      <div style="text-align: center; margin-bottom: 24px;">
+        <a href="${resetUrl}" style="display: inline-block; background-color: #F0A500; color: #0A2540; text-decoration: none; font-weight: 700; padding: 14px 24px; border-radius: 10px;">
+          Reset Password
+        </a>
+      </div>
+      <p style="color: #6b7280; line-height: 1.6; font-size: 14px; word-break: break-word;">
+        If the button does not open, copy this link into your browser:<br />
+        <a href="${resetUrl}" style="color: #0A2540;">${resetUrl}</a>
+      </p>
+      <p style="color: #9ca3af; font-size: 13px; line-height: 1.5; margin-bottom: 0;">
+        If you did not request this change, you can ignore this email.
+      </p>
+    </div>
+  </div>
+`;
+
+const finishPasswordReset = async (user) => {
+  user.resetPasswordToken = undefined;
+  user.resetPasswordExpire = undefined;
+
+  await user.save();
+
+  return {
+    success: true,
+    data: getAuthResponse(user),
+    message: 'Password reset successful',
+  };
+};
 
 // @desc    Register a new user
 // @route   POST /api/auth/register
 // @access  Public
-const registerUser = async (req, res) => {
+const registerUser = async (req, res, next) => {
   try {
-    const { name, email, password, role, phone, area, ...rest } = req.body;
-
-    if (!name || !email || !password) {
-      return res.status(400).json({
-        success: false,
-        message: 'Name, email, and password are required',
-      });
-    }
-
-    // Checking if user exists is standard practice before save, though Mongoose throws 11000
-    const userExists = await User.findOne({ email });
-
-    if (userExists) {
-      return res.status(400).json({
-        success: false,
-        message: 'User already exists with this email',
-      });
-    }
-
-    // Role defaults to customer. Only allow valid roles directly.
-    const userRole = ['customer', 'plumber', 'admin'].includes(role) ? role : 'customer';
-
-    const userFields = {
+    const {
       name,
       email,
       password,
-      role: userRole,
+      role,
       phone,
       area,
-      ...rest // Captures plumber specific fields like bio, experience, etc.
-    };
+      bio,
+      experience,
+      hourlyRate,
+      services,
+      availability,
+      profileImage,
+    } = req.body;
 
-    const user = await User.create(userFields);
+    if (!name || !email || !password) {
+      return next(createHttpError(400, 'Name, email, and password are required'));
+    }
 
-    if (user) {
-      res.status(201).json({
-        success: true,
-        data: {
-          _id: user._id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-          token: generateToken(user._id, user.role)
-        },
-        message: 'User registered successfully',
-      });
-    } else {
-      res.status(400).json({
-        success: false,
-        message: 'Invalid user data received',
-      });
+    if (role === 'admin') {
+      return next(createHttpError(403, 'Admin registration is not allowed'));
     }
-  } catch (error) {
-    if (error.code === 11000) {
-      return res.status(400).json({
-        success: false,
-        message: 'Email already exists',
-      });
+
+    const normalizedEmail = normalizeEmail(email);
+    const userExists = await User.findOne({ email: normalizedEmail });
+
+    if (userExists) {
+      return next(createHttpError(409, 'Email already exists', 'email'));
     }
-    res.status(500).json({
-      success: false,
-      message: error.message || 'Server Error'
+
+    const user = await User.create({
+      name: name.trim(),
+      email: normalizedEmail,
+      password,
+      role: role === 'plumber' ? 'plumber' : 'customer',
+      phone,
+      area,
+      bio,
+      experience,
+      hourlyRate,
+      services: Array.isArray(services) ? services : [],
+      availability,
+      profileImage,
     });
+
+    return res.status(201).json({
+      success: true,
+      data: getAuthResponse(user),
+      message: 'User registered successfully',
+    });
+  } catch (error) {
+    return next(error);
   }
 };
 
 // @desc    Authenticate user & get token
 // @route   POST /api/auth/login
 // @access  Public
-const loginUser = async (req, res) => {
+const loginUser = async (req, res, next) => {
   try {
     const { email, password } = req.body;
 
     if (!email || !password) {
-      return res.status(400).json({
-        success: false,
-        message: 'Email and password are required',
-      });
+      return next(createHttpError(400, 'Email and password are required'));
     }
 
-    // We explicitly requested to not select password by default in model, so we must add +password
-    const user = await User.findOne({ email }).select('+password');
+    const user = await User.findOne({ email: normalizeEmail(email) }).select('+password');
 
-    if (user && (await user.matchPassword(password))) {
-      res.status(200).json({
-        success: true,
-        data: {
-          _id: user._id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-          token: generateToken(user._id, user.role)
-        },
-        message: 'Login successful'
-      });
-    } else {
-      res.status(401).json({
-        success: false,
-        message: 'Invalid email or password'
-      });
+    if (!user || !(await user.matchPassword(password))) {
+      return next(createHttpError(401, 'Invalid email or password'));
     }
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message || 'Server Error'
+
+    return res.status(200).json({
+      success: true,
+      data: getAuthResponse(user),
+      message: 'Login successful',
     });
+  } catch (error) {
+    return next(error);
   }
 };
 
 // @desc    Forgot Password
 // @route   POST /api/auth/forgot-password
 // @access  Public
-const forgotPassword = async (req, res) => {
+const forgotPassword = async (req, res, next) => {
   try {
-    const user = await User.findOne({ email: req.body.email });
+    const normalizedEmail = normalizeEmail(req.body.email);
+
+    if (!normalizedEmail) {
+      return next(createHttpError(400, 'Email is required', 'email'));
+    }
+
+    const user = await User.findOne({ email: normalizedEmail });
 
     if (!user) {
-      // Enterprise security: Don't leak whether an email exists or not
       return res.status(200).json({
         success: true,
-        message: 'If an account matches that email, a reset token has been processed.',
+        data: null,
+        message: GENERIC_RESET_MESSAGE,
       });
     }
 
-    // Get reset token
     const resetToken = user.getResetPasswordToken();
-
     await user.save({ validateBeforeSave: false });
 
-    // ENTERPRISE EMAIL TRANSPORT
-    const messageHtml = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
-        <div style="background-color: #2E7D32; padding: 20px; text-align: center;">
-          <h2 style="color: #ffffff; margin: 0;">Plumber Booking Portal</h2>
-        </div>
-        <div style="padding: 30px; background-color: #f9fdfa;">
-          <h3 style="color: #333333; margin-top: 0;">Password Reset Request</h3>
-          <p style="color: #555555; line-height: 1.6;">
-            Hello ${user.name},
-          </p>
-          <p style="color: #555555; line-height: 1.6;">
-            We received a request to securely reset your password. Please use the verification code below to authorize this change. This code is valid for 10 minutes.
-          </p>
-          <div style="text-align: center; margin: 30px 0;">
-            <div style="background-color: #f1f8f5; border: 2px dashed #4CAF50; color: #2E7D32; padding: 16px 32px; border-radius: 8px; font-size: 32px; font-weight: bold; letter-spacing: 6px; display: inline-block;">${resetToken}</div>
-          </div>
-          <p style="color: #888888; font-size: 0.9em; line-height: 1.5;">
-            If you didn't request a password reset, you can safely ignore this email.
-          </p>
-        </div>
-        <div style="background-color: #eeeeee; padding: 15px; text-align: center;">
-          <p style="color: #999999; font-size: 0.85em; margin: 0;">&copy; 2026 Plumber Booking Express. All rights reserved.</p>
-        </div>
-      </div>
-    `;
+    const resetUrl = `${getFrontendUrl()}/reset-password/${resetToken}`;
 
     try {
       if (process.env.SMTP_EMAIL && process.env.SMTP_PASSWORD) {
-        // Only attempt to send if credentials exist, otherwise log error but don't crash route
-        await require('../utils/sendEmail')({
+        await sendEmail({
           email: user.email,
-          subject: 'Your Password Reset Link',
-          html: messageHtml
+          subject: 'Reset your FlowMatch password',
+          html: resetPasswordEmailTemplate({
+            name: user.name,
+            otp: resetToken,
+            resetUrl,
+          }),
         });
-      } else {
+      } else if (process.env.NODE_ENV !== 'production') {
         console.warn('⚠️ SMTP credentials not found in .env! Email dispatch bypassed.');
         console.log(`[SIMULATED EMAIL] OTP: ${resetToken}`);
+        console.log(`[SIMULATED EMAIL] URL: ${resetUrl}`);
       }
 
-      res.status(200).json({
+      return res.status(200).json({
         success: true,
-        message: 'If an account matches that email, a reset link has been dispatched to your inbox.',
+        data: null,
+        message: GENERIC_RESET_MESSAGE,
       });
-    } catch (err) {
-      console.error('Email dispatch failed:', err);
-      // Reset user token so they can try again
+    } catch (error) {
       user.resetPasswordToken = undefined;
       user.resetPasswordExpire = undefined;
       await user.save({ validateBeforeSave: false });
 
-      return res.status(500).json({
-        success: false,
-        message: 'Email could not be dispatched. Please contact support.',
-      });
+      return next(createHttpError(500, 'Email could not be dispatched. Please contact support.'));
     }
 
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message || 'Server Error processing forgot password request'
-    });
+    return next(error);
   }
 };
 
 // @desc    Reset Password
 // @route   POST /api/auth/reset-password
 // @access  Public
-const resetPassword = async (req, res) => {
+const resetPassword = async (req, res, next) => {
   try {
     const { email, otp, password } = req.body;
 
     if (!email || !otp || !password) {
-      return res.status(400).json({ success: false, message: 'Email, Verification Code, and New Password are required' });
+      return next(createHttpError(400, 'Email, verification code, and new password are required'));
     }
 
-    // Reconstruct token hash to compare to DB mapping
-    const resetPasswordToken = crypto
-      .createHash('sha256')
-      .update(otp)
-      .digest('hex');
-
     const user = await User.findOne({
-      email,
-      resetPasswordToken,
+      email: normalizeEmail(email),
+      resetPasswordToken: hashResetToken(otp),
       resetPasswordExpire: { $gt: Date.now() },
     });
 
     if (!user) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid or expired reset token',
-      });
+      return next(createHttpError(400, 'Invalid or expired reset token'));
     }
 
-    // Set new password
-    user.password = req.body.password;
-    user.resetPasswordToken = undefined;
-    user.resetPasswordExpire = undefined;
-    
-    await user.save();
+    user.password = password;
 
-    res.status(200).json({
-      success: true,
-      data: {
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        token: generateToken(user._id, user.role)
-      },
-      message: 'Password reset completely successful. Please proceed to login.',
-    });
+    const response = await finishPasswordReset(user);
+
+    return res.status(200).json(response);
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message || 'Server error dynamically resetting password constraints'
+    return next(error);
+  }
+};
+
+const resetPasswordByToken = async (req, res, next) => {
+  try {
+    const { password } = req.body;
+    const { token } = req.params;
+
+    if (!token || !password) {
+      return next(createHttpError(400, 'Reset token and new password are required'));
+    }
+
+    const user = await User.findOne({
+      resetPasswordToken: hashResetToken(token),
+      resetPasswordExpire: { $gt: Date.now() },
     });
+
+    if (!user) {
+      return next(createHttpError(400, 'Invalid or expired reset token'));
+    }
+
+    user.password = password;
+
+    const response = await finishPasswordReset(user);
+
+    return res.status(200).json(response);
+  } catch (error) {
+    return next(error);
   }
 };
 
@@ -261,5 +270,6 @@ module.exports = {
   registerUser,
   loginUser,
   forgotPassword,
-  resetPassword
+  resetPassword,
+  resetPasswordByToken,
 };

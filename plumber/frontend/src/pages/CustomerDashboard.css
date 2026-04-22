@@ -1,0 +1,147 @@
+.customer-dash {
+  max-width: 900px;
+}
+
+.dash-welcome {
+  margin-bottom: 28px;
+}
+
+.dash-greeting {
+  font-size: clamp(1.4rem, 3.5vw, 2rem);
+  margin-bottom: 2px;
+}
+
+.dash-date {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+/* Stats row */
+.dash-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+@media (max-width: 600px) {
+  .dash-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.stat-card {
+  padding: 20px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.stat-label {
+  font-size: 0.78rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 600;
+}
+
+.stat-value {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-weight: 700;
+  color: var(--navy);
+}
+
+.stat-amber { color: #C17D00; }
+.stat-green { color: var(--confirm-green); }
+
+/* Section */
+.dash-section {
+  margin-bottom: 28px;
+}
+
+.dash-section-title {
+  font-size: clamp(1rem, 2.5vw, 1.25rem);
+  margin-bottom: 12px;
+}
+
+/* Bookings table */
+.bookings-table-wrap {
+  overflow-x: auto;
+  padding: 0;
+}
+
+.bookings-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.bookings-table th {
+  text-align: left;
+  padding: 12px 16px;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  border-bottom: 1px solid var(--sky);
+  font-weight: 600;
+}
+
+.bookings-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(147, 197, 232, 0.2);
+  vertical-align: middle;
+}
+
+.bookings-table tr:last-child td {
+  border-bottom: none;
+}
+
+.td-name {
+  font-weight: 600;
+  color: var(--navy);
+}
+
+.table-action-btn {
+  padding: 6px 14px;
+  font-size: 0.78rem;
+  display: inline-block;
+}
+
+/* Quick action */
+.dash-quick-action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px;
+  gap: 16px;
+  margin-top: 8px;
+}
+
+.dash-quick-action h3 {
+  font-size: clamp(1rem, 2vw, 1.15rem);
+  margin-bottom: 2px;
+}
+
+.dash-quick-action p {
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+.dash-quick-action .btn-primary {
+  white-space: nowrap;
+  width: auto;
+  padding: 10px 24px;
+}
+
+@media (max-width: 600px) {
+  .dash-quick-action {
+    flex-direction: column;
+    text-align: center;
+  }
+  .dash-quick-action .btn-primary {
+    width: 100%;
+  }
+}

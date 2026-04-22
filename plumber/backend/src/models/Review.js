@@ -26,21 +26,14 @@ const reviewSchema = new mongoose.Schema({
   comment: {
     type: String,
     trim: true,
+    maxlength: [500, 'Comment cannot exceed 500 characters'],
   },
 }, {
   timestamps: true,
 });
 
-// Custom async validation to ensure booking status = completed
-reviewSchema.path('bookingId').validate(async function (value) {
-  try {
-    const booking = await mongoose.model('Booking').findById(value);
-    if (!booking) return false;
-    return booking.status === 'completed';
-  } catch (error) {
-    return false;
-  }
-}, 'Review can only be created if the booking is completed.');
+reviewSchema.index({ bookingId: 1 }, { unique: true });
+reviewSchema.index({ plumberId: 1 });
 
 const Review = mongoose.model('Review', reviewSchema);
 

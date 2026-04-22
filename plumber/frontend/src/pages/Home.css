@@ -95,9 +95,21 @@
 }
 
 .badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
     font-weight: 600;
-    font-size: 1.1rem;
+    font-size: 1rem;
     color: var(--confirm-green);
+}
+
+/* Hero Button */
+.hero-btn {
+    padding: 14px 32px;
+    font-size: 1rem;
+    min-width: 160px;
+    text-align: center;
+    display: inline-block;
 }
 
 /* Section Shared Styles */
@@ -113,6 +125,75 @@
     }
 }
 
+/* How It Works Section */
+.how-it-works-section {
+    padding: 60px 20px;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+@media (min-width: 768px) {
+    .how-it-works-section {
+        padding: 80px 24px;
+    }
+}
+
+.how-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 24px;
+}
+
+@media (min-width: 768px) {
+    .how-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 32px;
+    }
+}
+
+.how-step {
+    text-align: center;
+    position: relative;
+    padding: 20px 16px;
+}
+
+.how-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: var(--mist);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px;
+}
+
+.how-number {
+    display: inline-block;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--navy);
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.82rem;
+    line-height: 28px;
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+.how-step h3 {
+    font-size: 1.1rem;
+    margin-bottom: 6px;
+}
+
+.how-step p {
+    color: var(--muted);
+    font-size: 0.88rem;
+    line-height: 1.6;
+}
+
+/* Services, Testimonials */
 .services-section, .testimonials-section {
     padding: 60px 20px;
     max-width: 1200px;
@@ -127,7 +208,7 @@
 
 .services-grid, .testimonials-grid {
     display: grid;
-    grid-template-columns: 1fr; /* Mobile first single column */
+    grid-template-columns: 1fr;
     gap: 20px;
 }
 
@@ -185,7 +266,8 @@
 
 .stars {
     color: var(--amber-cta);
-    font-size: 1.5rem;
+    display: flex;
+    gap: 2px;
     margin-bottom: 16px;
 }
 

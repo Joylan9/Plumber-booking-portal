@@ -1,0 +1,48 @@
+.review-form {
+  padding: 20px;
+}
+
+.rf-title {
+  font-size: 1rem;
+  margin-bottom: 12px;
+}
+
+.rf-stars {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 14px;
+}
+
+.rf-textarea {
+  resize: none;
+  min-height: 70px;
+  margin-bottom: 8px;
+}
+
+.rf-error {
+  color: var(--danger);
+  font-size: 0.82rem;
+  margin-bottom: 8px;
+}
+
+.rf-submit {
+  width: 100%;
+  padding: 10px;
+  font-size: 0.88rem;
+}
+
+.review-form-done {
+  padding: 24px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.review-form-done p {
+  color: var(--confirm-green);
+  font-weight: 600;
+  font-size: 0.92rem;
+  margin: 0;
+}

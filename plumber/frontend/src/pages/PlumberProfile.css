@@ -1,0 +1,152 @@
+.pp-container {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 32px 20px;
+}
+
+/* Hero card */
+.pp-hero {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 28px 24px;
+  margin-bottom: 28px;
+}
+
+.pp-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--navy);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.pp-name {
+  font-size: clamp(1.3rem, 3vw, 1.8rem);
+  margin-bottom: 2px;
+}
+
+.pp-area {
+  color: var(--muted);
+  font-size: 0.88rem;
+  margin-bottom: 6px;
+}
+
+.pp-star-display {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.pp-rating-text {
+  margin-left: 6px;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+/* Grid layout */
+.pp-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+}
+
+@media (min-width: 768px) {
+  .pp-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.pp-detail-card {
+  padding: 20px;
+  margin-bottom: 14px;
+}
+
+.pp-detail-card h3 {
+  font-size: 1rem;
+  margin-bottom: 8px;
+}
+
+.pp-detail-card p {
+  font-size: 0.88rem;
+  color: var(--muted);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.pp-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.service-tag {
+  display: inline-block;
+  background: var(--mist);
+  color: var(--steel-blue);
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 0.78rem;
+  font-weight: 500;
+}
+
+.pp-stats-inline {
+  display: flex;
+  gap: 20px;
+}
+
+.pp-stats-inline > div {
+  display: flex;
+  flex-direction: column;
+}
+
+.pp-stat-label {
+  font-size: 0.72rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 600;
+}
+
+.pp-stat-val {
+  font-family: 'Syne', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--navy);
+}
+
+.pp-book-btn {
+  width: 100%;
+  padding: 14px;
+  margin-top: 4px;
+}
+
+/* Reviews section */
+.pp-reviews-title {
+  font-size: 1.1rem;
+  margin-bottom: 14px;
+}
+
+.pp-no-reviews {
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.pp-reviews-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.pp-load-more {
+  width: 100%;
+  padding: 10px;
+  font-size: 0.85rem;
+  margin-top: 4px;
+}

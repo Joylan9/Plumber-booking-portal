@@ -5,6 +5,7 @@ import { createBooking } from '../services/bookingService';
 import { getPlumbers } from '../services/plumberService';
 import { toast } from '../components/Toast';
 import SkeletonLoader from '../components/SkeletonLoader';
+import { formatCurrency } from '../utils/format';
 import './BookingForm.css';
 
 const TIME_SLOTS = [];

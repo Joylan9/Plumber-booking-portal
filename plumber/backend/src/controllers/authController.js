@@ -249,9 +249,11 @@ const forgotPassword = async (req, res, next) => {
       user.resetPasswordExpire = undefined;
       await user.save({ validateBeforeSave: false });
 
-      return next(error.statusCode
-        ? error
-        : createHttpError(500, 'Email could not be dispatched. Please contact support.'));
+      if (!error.statusCode) {
+        error.customContext = 'email';
+      }
+
+      return next(error);
     }
 
   } catch (error) {

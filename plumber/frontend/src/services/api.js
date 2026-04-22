@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { normalizeApiError } from './apiError';
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000',
@@ -16,11 +17,14 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (res) => res,
   (err) => {
-    if (err.response?.status === 401) {
+    const requestUrl = err.config?.url || '';
+    const isAuthRequest = requestUrl.startsWith('/api/auth/');
+
+    if (err.response?.status === 401 && !isAuthRequest) {
       localStorage.removeItem('user');
       window.location.href = '/login';
     }
-    return Promise.reject(err?.response?.data || err);
+    return Promise.reject(normalizeApiError(err));
   }
 );
 

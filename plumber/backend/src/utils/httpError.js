@@ -9,6 +9,35 @@ const createHttpError = (statusCode, message, field) => {
   return error;
 };
 
+const hasMessageFragment = (error, fragment) => (
+  typeof error?.message === 'string'
+  && error.message.toLowerCase().includes(fragment)
+);
+
+const isDatabaseUnavailableError = (error) => {
+  const transientDatabaseErrors = new Set([
+    'MongooseServerSelectionError',
+    'MongoServerSelectionError',
+    'MongoNetworkError',
+    'MongoNetworkTimeoutError',
+    'MongoTimeoutError',
+  ]);
+
+  return transientDatabaseErrors.has(error?.name)
+    || hasMessageFragment(error, 'econnrefused')
+    || hasMessageFragment(error, 'server selection timed out')
+    || hasMessageFragment(error, 'buffering timed out')
+    || hasMessageFragment(error, 'topology was destroyed')
+    || hasMessageFragment(error, 'connection closed unexpectedly');
+};
+
+const isEmailTransportError = (error) => (
+  hasMessageFragment(error, 'econnrefused')
+  || hasMessageFragment(error, 'enotfound')
+  || hasMessageFragment(error, 'connection timeout')
+  || hasMessageFragment(error, 'greeting never received')
+);
+
 const normalizeError = (error) => {
   if (!error) {
     return createHttpError(500, 'Server Error');
@@ -50,6 +79,18 @@ const normalizeError = (error) => {
 
   if (error.name === 'CastError') {
     return createHttpError(400, `Invalid ${error.path}`, error.path);
+  }
+
+  if (isDatabaseUnavailableError(error)) {
+    return createHttpError(503, 'Database service is temporarily unavailable. Please try again in a moment.');
+  }
+
+  if (error.customContext === 'email' && isEmailTransportError(error)) {
+    return createHttpError(503, 'Email service is temporarily unavailable. Please try again later.');
+  }
+
+  if (error.customContext === 'email') {
+    return createHttpError(500, 'Email could not be dispatched. Please contact support.');
   }
 
   if (typeof error.statusCode !== 'number') {

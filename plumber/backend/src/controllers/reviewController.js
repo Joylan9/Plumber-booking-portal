@@ -30,6 +30,11 @@ const createReview = async (req, res, next) => {
       return next(createHttpError(400, 'Booking and rating are required'));
     }
 
+    const numericRating = Number(rating);
+    if (!Number.isInteger(numericRating) || numericRating < 1 || numericRating > 5) {
+      return next(createHttpError(400, 'Rating must be an integer between 1 and 5', 'rating'));
+    }
+
     if (req.user.role !== 'customer') {
       return next(createHttpError(403, 'Only customers can create reviews'));
     }
@@ -58,7 +63,7 @@ const createReview = async (req, res, next) => {
       return next(createHttpError(409, 'You already reviewed this booking'));
     }
 
-    const trimmedComment = comment.trim();
+    const trimmedComment = typeof comment === 'string' ? comment.trim() : '';
     if (trimmedComment && trimmedComment.length < 10) {
       return next(createHttpError(400, 'Comment must be at least 10 characters', 'comment'));
     }
@@ -67,7 +72,7 @@ const createReview = async (req, res, next) => {
       bookingId,
       customerId: req.user._id,
       plumberId: booking.plumberId,
-      rating,
+      rating: numericRating,
       comment: trimmedComment,
     });
 
@@ -103,12 +108,12 @@ const getPlumberReviews = async (req, res, next) => {
 
     return res.status(200).json({
       success: true,
-      data: reviews,
+      data: reviews || [],
       pagination: {
         page,
         limit,
         total,
-        hasMore: skip + reviews.length < total,
+        hasMore: skip + (reviews?.length || 0) < total,
       },
     });
   } catch (error) {

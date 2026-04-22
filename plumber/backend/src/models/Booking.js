@@ -32,17 +32,21 @@ const bookingSchema = new mongoose.Schema({
   time: {
     type: String,
     required: [true, 'Booking time is required'],
+    trim: true,
   },
   address: {
     type: String,
     required: [true, 'Service address is required'],
+    trim: true,
   },
   issueDescription: {
     type: String,
     required: [true, 'Issue description is required'],
+    trim: true,
   },
   notes: {
     type: String,
+    trim: true,
   },
   status: {
     type: String,
@@ -61,6 +65,8 @@ const bookingSchema = new mongoose.Schema({
 
 bookingSchema.index({ customerId: 1, status: 1 });
 bookingSchema.index({ plumberId: 1, status: 1 });
+bookingSchema.index({ customerId: 1, createdAt: -1 });
+bookingSchema.index({ plumberId: 1, createdAt: -1 });
 
 const Booking = mongoose.model('Booking', bookingSchema);
 

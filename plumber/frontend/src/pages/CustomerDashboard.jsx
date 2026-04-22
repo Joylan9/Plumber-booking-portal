@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { getMyBookings } from '../services/bookingService';
+import { formatDate, firstName } from '../utils/format';
 import DashboardLayout from '../components/DashboardLayout';
 import StatusBadge from '../components/StatusBadge';
 import SkeletonLoader from '../components/SkeletonLoader';
@@ -43,20 +44,24 @@ export default function CustomerDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const fetchData = async () => {
-    setLoading(true);
+  const fetchData = async (isBackground = false) => {
+    if (!isBackground) setLoading(true);
     setError(null);
     try {
       const res = await getMyBookings();
       setBookings(res.data || []);
     } catch (err) {
-      setError(err.message || 'Failed to load bookings');
+      if (!isBackground) setError(err.message || 'Failed to load bookings');
     } finally {
-      setLoading(false);
+      if (!isBackground) setLoading(false);
     }
   };
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => {
+    fetchData();
+    const interval = setInterval(() => fetchData(true), 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   const stats = {
     total: bookings.length,
@@ -71,7 +76,7 @@ export default function CustomerDashboard() {
       <div className="customer-dash">
         {/* Welcome */}
         <div className="dash-welcome">
-          <h1 className="dash-greeting">{getGreeting()}, {user?.name?.split(' ')[0]}</h1>
+          <h1 className="dash-greeting">{getGreeting()}, {firstName(user?.name)}</h1>
           <p className="dash-date">{new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
         </div>
 
@@ -122,8 +127,8 @@ export default function CustomerDashboard() {
                       <motion.tbody variants={stagger} initial="hidden" animate="visible">
                         {recent.map((b) => (
                           <motion.tr key={b._id} variants={fadeUp}>
-                            <td className="td-name">{b.plumberId?.name || 'N/A'}</td>
-                            <td>{new Date(b.date).toLocaleDateString()}</td>
+                            <td className="td-name">{b.plumberId?.name || '—'}</td>
+                            <td>{formatDate(b.date)}</td>
                             <td><StatusBadge status={b.status} /></td>
                             <td>
                               <Link to={`/bookings/${b._id}`} className="btn-outline table-action-btn">View</Link>

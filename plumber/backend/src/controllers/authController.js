@@ -8,12 +8,47 @@ const { createHttpError } = require('../utils/httpError');
 const GENERIC_RESET_MESSAGE = 'If an account matches that email, reset instructions have been sent.';
 
 const normalizeEmail = (email = '') => email.trim().toLowerCase();
+const normalizeOptionalString = (value) => (typeof value === 'string' ? value.trim() : '');
+const normalizeServices = (services) => {
+  if (!Array.isArray(services)) {
+    return [];
+  }
+
+  return [...new Set(
+    services
+      .map((service) => normalizeOptionalString(service))
+      .filter(Boolean)
+  )];
+};
 
 const hashResetToken = (token) => crypto.createHash('sha256').update(token).digest('hex');
 
 const getFrontendUrl = () => (process.env.FRONTEND_URL || 'http://localhost:5173').replace(/\/$/, '');
 
 const getAuthResponse = (user) => sanitizeUser(user, generateToken(user._id, user.role));
+const canSendResetEmail = () => (
+  Boolean(process.env.SMTP_HOST)
+  && Boolean(process.env.SMTP_EMAIL)
+  && Boolean(process.env.SMTP_PASSWORD)
+  && Boolean(process.env.FROM_EMAIL)
+);
+const shouldLogResetDetails = () => (
+  process.env.NODE_ENV !== 'production'
+  && process.env.NODE_ENV !== 'test'
+  && process.env.ENABLE_DEV_EMAIL_LOGS === 'true'
+);
+
+const validatePassword = (password) => {
+  if (typeof password !== 'string' || !password) {
+    return 'Password is required';
+  }
+
+  if (password.length < 6) {
+    return 'Password must be at least 6 characters';
+  }
+
+  return null;
+};
 
 const resetPasswordEmailTemplate = ({ name, otp, resetUrl }) => `
   <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden;">
@@ -79,15 +114,27 @@ const registerUser = async (req, res, next) => {
       profileImage,
     } = req.body;
 
-    if (!name || !email || !password) {
+    const trimmedName = normalizeOptionalString(name);
+    const normalizedEmail = normalizeEmail(email);
+    const normalizedRole = normalizeOptionalString(role);
+
+    if (!trimmedName || !normalizedEmail || typeof password !== 'string' || !password) {
       return next(createHttpError(400, 'Name, email, and password are required'));
     }
 
-    if (role === 'admin') {
+    const passwordError = validatePassword(password);
+    if (passwordError) {
+      return next(createHttpError(400, passwordError, 'password'));
+    }
+
+    if (normalizedRole === 'admin') {
       return next(createHttpError(403, 'Admin registration is not allowed'));
     }
 
-    const normalizedEmail = normalizeEmail(email);
+    if (normalizedRole && !['customer', 'plumber'].includes(normalizedRole)) {
+      return next(createHttpError(400, 'Invalid role supplied', 'role'));
+    }
+
     const userExists = await User.findOne({ email: normalizedEmail });
 
     if (userExists) {
@@ -95,18 +142,18 @@ const registerUser = async (req, res, next) => {
     }
 
     const user = await User.create({
-      name: name.trim(),
+      name: trimmedName,
       email: normalizedEmail,
       password,
-      role: role === 'plumber' ? 'plumber' : 'customer',
-      phone,
-      area,
-      bio,
-      experience,
-      hourlyRate,
-      services: Array.isArray(services) ? services : [],
-      availability,
-      profileImage,
+      role: normalizedRole === 'plumber' ? 'plumber' : 'customer',
+      phone: normalizeOptionalString(phone),
+      area: normalizeOptionalString(area),
+      bio: normalizeOptionalString(bio),
+      experience: experience === undefined || experience === null || experience === '' ? undefined : Number(experience),
+      hourlyRate: hourlyRate === undefined || hourlyRate === null || hourlyRate === '' ? undefined : Number(hourlyRate),
+      services: normalizeServices(services),
+      availability: normalizeOptionalString(availability),
+      profileImage: normalizeOptionalString(profileImage),
     });
 
     return res.status(201).json({
@@ -124,13 +171,14 @@ const registerUser = async (req, res, next) => {
 // @access  Public
 const loginUser = async (req, res, next) => {
   try {
-    const { email, password } = req.body;
+    const normalizedEmail = normalizeEmail(req.body.email);
+    const password = req.body.password;
 
-    if (!email || !password) {
+    if (!normalizedEmail || typeof password !== 'string' || !password) {
       return next(createHttpError(400, 'Email and password are required'));
     }
 
-    const user = await User.findOne({ email: normalizeEmail(email) }).select('+password');
+    const user = await User.findOne({ email: normalizedEmail }).select('+password');
 
     if (!user || !(await user.matchPassword(password))) {
       return next(createHttpError(401, 'Invalid email or password'));
@@ -173,7 +221,7 @@ const forgotPassword = async (req, res, next) => {
     const resetUrl = `${getFrontendUrl()}/reset-password/${resetToken}`;
 
     try {
-      if (process.env.SMTP_EMAIL && process.env.SMTP_PASSWORD) {
+      if (canSendResetEmail()) {
         await sendEmail({
           email: user.email,
           subject: 'Reset your FlowMatch password',
@@ -183,7 +231,9 @@ const forgotPassword = async (req, res, next) => {
             resetUrl,
           }),
         });
-      } else if (process.env.NODE_ENV !== 'production') {
+      } else if (process.env.NODE_ENV === 'production') {
+        throw createHttpError(500, 'Password reset email service is not configured');
+      } else if (shouldLogResetDetails()) {
         console.warn('⚠️ SMTP credentials not found in .env! Email dispatch bypassed.');
         console.log(`[SIMULATED EMAIL] OTP: ${resetToken}`);
         console.log(`[SIMULATED EMAIL] URL: ${resetUrl}`);
@@ -199,7 +249,9 @@ const forgotPassword = async (req, res, next) => {
       user.resetPasswordExpire = undefined;
       await user.save({ validateBeforeSave: false });
 
-      return next(createHttpError(500, 'Email could not be dispatched. Please contact support.'));
+      return next(error.statusCode
+        ? error
+        : createHttpError(500, 'Email could not be dispatched. Please contact support.'));
     }
 
   } catch (error) {
@@ -218,6 +270,11 @@ const resetPassword = async (req, res, next) => {
       return next(createHttpError(400, 'Email, verification code, and new password are required'));
     }
 
+    const passwordError = validatePassword(password);
+    if (passwordError) {
+      return next(createHttpError(400, passwordError, 'password'));
+    }
+
     const user = await User.findOne({
       email: normalizeEmail(email),
       resetPasswordToken: hashResetToken(otp),
@@ -225,7 +282,7 @@ const resetPassword = async (req, res, next) => {
     });
 
     if (!user) {
-      return next(createHttpError(400, 'Invalid or expired reset token'));
+      return next(createHttpError(401, 'Invalid or expired reset token'));
     }
 
     user.password = password;
@@ -247,13 +304,18 @@ const resetPasswordByToken = async (req, res, next) => {
       return next(createHttpError(400, 'Reset token and new password are required'));
     }
 
+    const passwordError = validatePassword(password);
+    if (passwordError) {
+      return next(createHttpError(400, passwordError, 'password'));
+    }
+
     const user = await User.findOne({
       resetPasswordToken: hashResetToken(token),
       resetPasswordExpire: { $gt: Date.now() },
     });
 
     if (!user) {
-      return next(createHttpError(400, 'Invalid or expired reset token'));
+      return next(createHttpError(401, 'Invalid or expired reset token'));
     }
 
     user.password = password;

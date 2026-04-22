@@ -20,6 +20,30 @@ const populateBooking = (query) => BOOKING_POPULATE.reduce(
   (currentQuery, populateConfig) => currentQuery.populate(populateConfig),
   query
 );
+const normalizeString = (value) => (typeof value === 'string' ? value.trim() : '');
+const parseBookingDate = (value) => {
+  const parsedDate = new Date(value);
+  return Number.isNaN(parsedDate.getTime()) ? null : parsedDate;
+};
+const resolveServiceType = (serviceType, plumber) => {
+  const explicitServiceType = normalizeString(serviceType);
+
+  if (explicitServiceType) {
+    return explicitServiceType;
+  }
+
+  if (Array.isArray(plumber.services)) {
+    const primaryService = plumber.services
+      .map((service) => normalizeString(service))
+      .find(Boolean);
+
+    if (primaryService) {
+      return primaryService;
+    }
+  }
+
+  return 'General Plumbing';
+};
 
 const getBookingAccessFilter = (user) => {
   if (user.role === 'customer') {
@@ -40,26 +64,60 @@ const getBookingAccessFilter = (user) => {
 const createBooking = async (req, res, next) => {
   try {
     const { plumberId, serviceType, date, time, address, issueDescription, notes } = req.body;
+    const normalizedPlumberId = normalizeString(plumberId);
+    const normalizedTime = normalizeString(time);
+    const normalizedAddress = normalizeString(address);
+    const normalizedIssueDescription = normalizeString(issueDescription);
+    const normalizedNotes = normalizeString(notes);
+    const bookingDate = parseBookingDate(date);
 
-    if (!plumberId || !serviceType || !date || !time || !address || !issueDescription) {
-      return next(createHttpError(400, 'Plumber, service type, date, time, address, and issue description are required'));
+    if (req.user.role !== 'customer') {
+      return next(createHttpError(403, 'Only customers can create bookings'));
     }
 
-    const plumber = await User.findById(plumberId);
+    if (!normalizedPlumberId) {
+      return next(createHttpError(400, 'Plumber is required', 'plumberId'));
+    }
+
+    if (!date) {
+      return next(createHttpError(400, 'Booking date is required', 'date'));
+    }
+
+    if (!bookingDate) {
+      return next(createHttpError(400, 'Booking date is invalid', 'date'));
+    }
+
+    if (!normalizedTime) {
+      return next(createHttpError(400, 'Booking time is required', 'time'));
+    }
+
+    if (!normalizedAddress) {
+      return next(createHttpError(400, 'Service address is required', 'address'));
+    }
+
+    if (!normalizedIssueDescription) {
+      return next(createHttpError(400, 'Issue description is required', 'issueDescription'));
+    }
+
+    const plumber = await User.findById(normalizedPlumberId).select('_id role services');
 
     if (!plumber || plumber.role !== 'plumber') {
       return next(createHttpError(400, 'Invalid plumber requested', 'plumberId'));
     }
 
+    if (normalizedPlumberId === req.user._id.toString()) {
+      return next(createHttpError(400, 'Customers cannot create bookings for themselves', 'plumberId'));
+    }
+
     const booking = await Booking.create({
       customerId: req.user._id,
-      plumberId,
-      serviceType,
-      date,
-      time,
-      address,
-      issueDescription,
-      notes,
+      plumberId: normalizedPlumberId,
+      serviceType: resolveServiceType(serviceType, plumber),
+      date: bookingDate,
+      time: normalizedTime,
+      address: normalizedAddress,
+      issueDescription: normalizedIssueDescription,
+      notes: normalizedNotes || undefined,
     });
 
     const populatedBooking = await populateBooking(Booking.findById(booking._id));
@@ -117,9 +175,9 @@ const getBookingById = async (req, res, next) => {
 
 const updateBookingStatus = async (req, res, next) => {
   try {
-    const { status } = req.body;
+    const nextStatus = normalizeString(req.body.status).toLowerCase();
 
-    if (!status || !VALID_STATUSES.includes(status)) {
+    if (!nextStatus || !VALID_STATUSES.includes(nextStatus)) {
       return next(createHttpError(400, 'Invalid status update command', 'status'));
     }
 
@@ -134,23 +192,17 @@ const updateBookingStatus = async (req, res, next) => {
       return next(createHttpError(403, 'Not authorized to update this booking status'));
     }
 
-    if (!VALID_STATUS_TRANSITIONS[booking.status].includes(status)) {
+    if (!VALID_STATUS_TRANSITIONS[booking.status].includes(nextStatus)) {
       return next(createHttpError(
         400,
-        `Cannot change booking status from ${booking.status} to ${status}`,
+        `Cannot change booking status from ${booking.status} to ${nextStatus}`,
         'status'
       ));
     }
 
-    booking.status = status;
-
-    if (status === 'completed') {
-      booking.completedAt = new Date();
-    }
-
-    if (status === 'cancelled') {
-      booking.cancelledAt = new Date();
-    }
+    booking.status = nextStatus;
+    booking.completedAt = nextStatus === 'completed' ? new Date() : undefined;
+    booking.cancelledAt = nextStatus === 'cancelled' ? new Date() : undefined;
 
     await booking.save();
 
@@ -159,7 +211,7 @@ const updateBookingStatus = async (req, res, next) => {
     return res.status(200).json({
       success: true,
       data: populatedBooking,
-      message: `Booking updated to ${status}`,
+      message: `Booking updated to ${nextStatus}`,
     });
   } catch (error) {
     return next(error);

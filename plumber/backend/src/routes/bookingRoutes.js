@@ -10,7 +10,7 @@ const { protectRoute, authorizeRoles } = require('../middleware/authMiddleware')
 const router = express.Router();
 
 router.route('/')
-  .post(protectRoute, authorizeRoles('customer', 'admin'), createBooking)
+  .post(protectRoute, authorizeRoles('customer'), createBooking)
   .get(protectRoute, getMyBookings);
 
 router.get('/my-bookings', protectRoute, getMyBookings);

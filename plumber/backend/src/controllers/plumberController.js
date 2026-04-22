@@ -1,6 +1,9 @@
 const User = require('../models/User');
 const { createHttpError } = require('../utils/httpError');
 
+const SAFE_PLUMBER_SELECT = '_id name area bio experience hourlyRate services availability rating totalReviews';
+const escapeRegex = (value = '') => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 // @desc    Get all plumbers
 // @route   GET /api/plumbers
 // @access  Public
@@ -8,16 +11,17 @@ const getPlumbers = async (req, res, next) => {
   try {
     const filter = { role: 'plumber' };
 
-    // Optional query parameter filtering
-    if (req.query.area) {
-      // Basic exact string match or regex match depending on complexity needed
-      filter.area = { $regex: req.query.area, $options: 'i' }; 
-    }
-    if (req.query.service) {
-      filter.services = { $in: [req.query.service] };
+    if (req.query.area && req.query.area.trim()) {
+      filter.area = { $regex: escapeRegex(req.query.area.trim()), $options: 'i' };
     }
 
-    const plumbers = await User.find(filter).select('-password');
+    if (req.query.service && req.query.service.trim()) {
+      filter.services = { $regex: escapeRegex(req.query.service.trim()), $options: 'i' };
+    }
+
+    const plumbers = await User.find(filter)
+      .select(SAFE_PLUMBER_SELECT)
+      .lean();
 
     return res.status(200).json({
       success: true,
@@ -34,7 +38,9 @@ const getPlumbers = async (req, res, next) => {
 // @access  Public
 const getPlumberById = async (req, res, next) => {
   try {
-    const plumber = await User.findOne({ _id: req.params.id, role: 'plumber' }).select('-password');
+    const plumber = await User.findOne({ _id: req.params.id, role: 'plumber' })
+      .select(SAFE_PLUMBER_SELECT)
+      .lean();
 
     if (!plumber) {
       return next(createHttpError(404, 'Plumber not found'));
@@ -51,5 +57,5 @@ const getPlumberById = async (req, res, next) => {
 
 module.exports = {
   getPlumbers,
-  getPlumberById
+  getPlumberById,
 };

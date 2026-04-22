@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { getMyBookings, updateBookingStatus } from '../services/bookingService';
+import { formatDate, firstName, clampRating } from '../utils/format';
 import DashboardLayout from '../components/DashboardLayout';
 import StatusBadge from '../components/StatusBadge';
 import ConfirmModal from '../components/ConfirmModal';
@@ -48,20 +49,24 @@ export default function PlumberDashboard() {
   const [error, setError] = useState(null);
   const [modal, setModal] = useState({ open: false, id: null, action: '' });
 
-  const fetchData = async () => {
-    setLoading(true);
+  const fetchData = async (isBackground = false) => {
+    if (!isBackground) setLoading(true);
     setError(null);
     try {
       const res = await getMyBookings();
       setBookings(res.data || []);
     } catch (err) {
-      setError(err.message || 'Failed to load bookings');
+      if (!isBackground) setError(err.message || 'Failed to load bookings');
     } finally {
-      setLoading(false);
+      if (!isBackground) setLoading(false);
     }
   };
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => {
+    fetchData();
+    const interval = setInterval(() => fetchData(true), 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleAction = async () => {
     const { id, action } = modal;
@@ -89,10 +94,10 @@ export default function PlumberDashboard() {
       <div className="plumber-dash">
         {/* Welcome */}
         <div className="dash-welcome">
-          <h1 className="dash-greeting">{getGreeting()}, {user?.name?.split(' ')[0]}</h1>
+          <h1 className="dash-greeting">{getGreeting()}, {firstName(user?.name)}</h1>
           <p className="dash-date">
-            {user?.rating > 0 && <span className="dash-rating">★ {user.rating.toFixed(1)}</span>}
-            {user?.totalReviews > 0 && <span> · {user.totalReviews} reviews</span>}
+            {clampRating(user?.rating) > 0 && <span className="dash-rating">★ {clampRating(user?.rating).toFixed(1)}</span>}
+            {(user?.totalReviews || 0) > 0 && <span> · {user.totalReviews} reviews</span>}
           </p>
         </div>
 
@@ -131,12 +136,12 @@ export default function PlumberDashboard() {
                     {pending.map((b) => (
                       <motion.div key={b._id} className="card-panel booking-card" variants={fadeUp} layout exit={{ opacity: 0, scale: 0.9 }}>
                         <div className="bc-header">
-                          <h4>{b.customerId?.name || 'Customer'}</h4>
+                          <h4>{b.customerId?.name || '—'}</h4>
                           <StatusBadge status={b.status} />
                         </div>
                         <p className="bc-issue">{b.issueDescription}</p>
                         <div className="bc-meta">
-                          <span>{new Date(b.date).toLocaleDateString()} · {b.time}</span>
+                          <span>{formatDate(b.date)} · {b.time || '—'}</span>
                           <span>{b.address}</span>
                         </div>
                         <div className="bc-actions">
@@ -159,12 +164,12 @@ export default function PlumberDashboard() {
                     {active.map((b) => (
                       <motion.div key={b._id} className="card-panel booking-card" variants={fadeUp} layout exit={{ opacity: 0, scale: 0.9 }}>
                         <div className="bc-header">
-                          <h4>{b.customerId?.name || 'Customer'}</h4>
+                          <h4>{b.customerId?.name || '—'}</h4>
                           <StatusBadge status={b.status} />
                         </div>
                         <p className="bc-issue">{b.issueDescription}</p>
                         <div className="bc-meta">
-                          <span>{new Date(b.date).toLocaleDateString()} · {b.time}</span>
+                          <span>{formatDate(b.date)} · {b.time || '—'}</span>
                           <span>{b.address}</span>
                         </div>
                         <div className="bc-actions">

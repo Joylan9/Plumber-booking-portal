@@ -1,3 +1,4 @@
+import { normalizeStatus } from '../utils/format';
 import './StatusBadge.css';
 
 const statusMap = {
@@ -8,10 +9,11 @@ const statusMap = {
 };
 
 export default function StatusBadge({ status }) {
-  const cls = statusMap[status] || 'status-pending';
+  const safe = normalizeStatus(status);
+  const cls = statusMap[safe] || 'status-pending';
   return (
     <span className={`status-badge ${cls}`}>
-      {status.charAt(0).toUpperCase() + status.slice(1)}
+      {safe.charAt(0).toUpperCase() + safe.slice(1)}
     </span>
   );
 }

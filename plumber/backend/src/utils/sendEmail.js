@@ -25,7 +25,9 @@ const sendEmail = async (options) => {
   // Dispatch the email
   const info = await transporter.sendMail(message);
 
-  console.log(`Message sent: %s`, info.messageId);
+  if (process.env.NODE_ENV !== 'production') {
+    console.log(`Message sent: %s`, info.messageId);
+  }
 };
 
 module.exports = sendEmail;

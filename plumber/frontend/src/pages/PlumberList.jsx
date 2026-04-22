@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { getPlumbers } from '../services/plumberService';
+import { formatCurrency, clampRating, nameInitial } from '../utils/format';
 import { getCategories } from '../services/categoryService';
 import SkeletonLoader from '../components/SkeletonLoader';
 import ErrorState from '../components/ErrorState';
@@ -134,9 +135,9 @@ const PlumberList = () => {
                  style={{ cursor: 'pointer' }}
               >
                 <div className="plumber-header">
-                  <div className="avatar">{plumber.name.charAt(0)}</div>
+                  <div className="avatar">{nameInitial(plumber.name)}</div>
                   <div className="plumber-info">
-                    <h3>{plumber.name}</h3>
+                    <h3>{plumber.name || 'Plumber'}</h3>
                     <p className="area">
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ verticalAlign: '-2px', marginRight: '4px' }}>
                         <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/>
@@ -150,7 +151,7 @@ const PlumberList = () => {
                   <div className="stat">
                     <span className="stars">
                       {[1,2,3,4,5].map(i => (
-                        <svg key={i} width="14" height="14" viewBox="0 0 24 24" fill={i <= Math.round(plumber.rating || 0) ? 'var(--amber-cta)' : 'none'} stroke={i <= Math.round(plumber.rating || 0) ? 'var(--amber-cta)' : '#ccc'} strokeWidth="2">
+                        <svg key={i} width="14" height="14" viewBox="0 0 24 24" fill={i <= Math.round(clampRating(plumber.rating)) ? 'var(--amber-cta)' : 'none'} stroke={i <= Math.round(clampRating(plumber.rating)) ? 'var(--amber-cta)' : '#ccc'} strokeWidth="2">
                           <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
                         </svg>
                       ))}
@@ -169,7 +170,7 @@ const PlumberList = () => {
                 </div>
 
                 <div className="plumber-footer">
-                   <div className="rate">${plumber.hourlyRate || 80}<span>/hr</span></div>
+                   <div className="rate">{formatCurrency(plumber.hourlyRate)}<span>/hr</span></div>
                    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                       <button className="btn-primary book-sm-btn" onClick={(e) => { e.stopPropagation(); navigate(`/booking?plumber=${plumber._id}`); }}>Book Now</button>
                    </motion.div>

@@ -48,7 +48,7 @@ const BookingForm = () => {
           }
         }
       } catch (err) {
-        console.error("Error fetching plumbers", err);
+        // Silently handle — plumbersLoading state already covers UX
       } finally {
         setPlumbersLoading(false);
       }
@@ -126,7 +126,7 @@ const BookingForm = () => {
                   <option value="">Choose an expert...</option>
                   {plumbers.map(p => (
                     <option key={p._id} value={p._id}>
-                      {p.name} — ${p.hourlyRate || 0}/hr ({p.experience || 0} yrs)
+                      {p.name || 'Plumber'} — {formatCurrency(p.hourlyRate)}/hr ({p.experience || 0} yrs)
                     </option>
                   ))}
                 </select>
@@ -139,7 +139,7 @@ const BookingForm = () => {
           {selectedPlumber && (
             <div className="cost-preview card-panel">
               <span>Estimated rate:</span>
-              <strong>${selectedPlumber.hourlyRate || 0}/hr</strong>
+              <strong>{formatCurrency(selectedPlumber.hourlyRate)}/hr</strong>
             </div>
           )}
 

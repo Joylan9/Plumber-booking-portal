@@ -67,9 +67,14 @@ const Navbar = () => {
                 <Link to="/dashboard" className="nav-link">Dashboard</Link>
               </li>
               <li className="nav-item">
-                <div className="user-pill glass-panel">
+                <Link to="/profile" className="nav-link user-pill glass-panel" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 12px' }}>
+                  {user.profileImage ? (
+                    <img src={import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}${user.profileImage}` : `http://localhost:5000${user.profileImage}`} alt="Avatar" style={{ width: '24px', height: '24px', borderRadius: '50%', objectFit: 'cover' }} />
+                  ) : (
+                    <span>👤</span>
+                  )}
                   {user.role} | {user.name.split(' ')[0]}
-                </div>
+                </Link>
               </li>
               <motion.li className="nav-item" whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                 <button className="btn-primary logout-btn nav-btn-sm" onClick={() => { logout(); }}>

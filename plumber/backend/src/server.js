@@ -20,21 +20,23 @@ connectDB();
 
 const app = express();
 
+const normalizeOrigin = (origin = '') => origin.replace(/\/$/, '');
 const allowedOrigins = [
   'https://internship-five-tau.vercel.app',
   'http://localhost:5173',
   'http://127.0.0.1:5173',
+  ...String(process.env.FRONTEND_URL || '')
+    .split(',')
+    .map((origin) => normalizeOrigin(origin.trim()))
+    .filter(Boolean),
 ];
-
-if (process.env.FRONTEND_URL) {
-  allowedOrigins.push(process.env.FRONTEND_URL.replace(/\/$/, ''));
-}
+const allowedOriginsSet = new Set(allowedOrigins.map((origin) => normalizeOrigin(origin)));
 
 // Middleware
 app.use(express.json());
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) {
+    if (!origin || allowedOriginsSet.has(normalizeOrigin(origin))) {
       return callback(null, true);
     }
 
@@ -60,5 +62,7 @@ app.use(errorHandler);
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  if (process.env.NODE_ENV !== 'production') {
+    console.log(`Server running on port ${PORT}`);
+  }
 });

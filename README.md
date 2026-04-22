@@ -165,6 +165,7 @@ SMTP_EMAIL=your_email_here@gmail.com
 SMTP_PASSWORD=your_secure_app_password
 FROM_EMAIL=noreply@flowmatch.com
 FROM_NAME="FlowMatch"
+ENABLE_DEV_EMAIL_LOGS=false
 
 # 3. Install dependencies and start the development server
 npm install
@@ -172,6 +173,11 @@ npm run dev
 
 # Optional: seed booking categories
 npm run seed:categories
+
+# Optional: run the backend smoke test against a running local API
+npm run smoke:test
+# Or point it at a different running backend
+SMOKE_BASE_URL=http://localhost:5000 npm run smoke:test
 ```
 
 ### B. Frontend Boot Sequence
@@ -219,7 +225,9 @@ POST   /api/categories
 
 ### Deployment Notes
 - Use `MONGO_URI` or `MONGODB_URI` for the backend database connection.
-- Set `FRONTEND_URL` to the deployed frontend origin so CORS allows the production app.
+- Set `FRONTEND_URL` to the deployed frontend origin so CORS allows the production app. You can provide a comma-separated allowlist if you need multiple frontend origins.
+- The booking API derives `serviceType` from the selected plumber's first service when the frontend does not send one, and falls back to `General Plumbing`.
+- Leave `ENABLE_DEV_EMAIL_LOGS=false` unless you explicitly want local reset OTP/link logging for debugging.
 - Use `npm run seed:categories` to preload the default plumbing service categories.
 - The repo now ignores `plumber/Database/`; use MongoDB Atlas or another managed MongoDB deployment for production.
 

@@ -33,7 +33,7 @@ const reviewSchema = new mongoose.Schema({
 });
 
 reviewSchema.index({ bookingId: 1 }, { unique: true });
-reviewSchema.index({ plumberId: 1 });
+reviewSchema.index({ plumberId: 1, createdAt: -1 });
 
 const Review = mongoose.model('Review', reviewSchema);
 

@@ -7,7 +7,7 @@ const getCategories = async (req, res, next) => {
 
     return res.status(200).json({
       success: true,
-      data: categories,
+      data: categories || [],
     });
   } catch (error) {
     return next(error);
@@ -25,7 +25,7 @@ const createCategory = async (req, res, next) => {
     const category = await Category.create({
       name: name.trim(),
       description: description ? description.trim() : '',
-      isActive,
+      isActive: Boolean(isActive),
     });
 
     return res.status(201).json({

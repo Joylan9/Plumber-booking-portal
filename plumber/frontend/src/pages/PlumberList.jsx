@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { getPlumbers } from '../services/plumberService';
+import { getCategories } from '../services/categoryService';
 import SkeletonLoader from '../components/SkeletonLoader';
 import ErrorState from '../components/ErrorState';
 import EmptyState from '../components/EmptyState';
@@ -32,6 +33,7 @@ const PlumberList = () => {
   const [error, setError] = useState(null);
   const [serviceFilter, setServiceFilter] = useState('');
   const [sortBy, setSortBy] = useState('');
+  const [allServices, setAllServices] = useState([]);
 
   const fetchPlumbers = async () => {
     setLoading(true);
@@ -49,7 +51,31 @@ const PlumberList = () => {
     }
   };
 
-  useEffect(() => { fetchPlumbers(); }, []);
+  useEffect(() => {
+    fetchPlumbers();
+
+    // Fetch categories from API for the filter dropdown
+    getCategories()
+      .then((data) => {
+        const list = data.data || data || [];
+        if (Array.isArray(list) && list.length > 0) {
+          const names = list.flatMap((cat) =>
+            cat.services ? cat.services.map((s) => (typeof s === 'string' ? s : s.name)) : [cat.name]
+          );
+          setAllServices([...new Set(names)]);
+        }
+      })
+      .catch(() => {
+        // Fallback: derive from plumber data (set after plumbers load)
+      });
+  }, []);
+
+  // Fallback: if API categories are empty, derive from plumber data
+  useEffect(() => {
+    if (allServices.length === 0 && plumbers.length > 0) {
+      setAllServices([...new Set(plumbers.flatMap(p => p.services || []))]);
+    }
+  }, [plumbers, allServices.length]);
 
   // Filter and sort
   useEffect(() => {
@@ -62,9 +88,6 @@ const PlumberList = () => {
     }
     setFiltered(result);
   }, [serviceFilter, sortBy, plumbers]);
-
-  // Collect unique services for filter dropdown
-  const allServices = [...new Set(plumbers.flatMap(p => p.services || []))];
 
   return (
     <div className="plumbers-page">

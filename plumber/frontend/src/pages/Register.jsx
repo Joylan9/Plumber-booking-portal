@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AuthContext } from '../context/AuthContext';
 import { register as registerApi } from '../services/authService';
+import { getCategories } from '../services/categoryService';
 import './Auth.css';
 
 const EyeIcon = ({ show }) => (
@@ -49,14 +50,36 @@ const Register = () => {
     bio: '',
     experience: '',
     hourlyRate: '',
-    services: ''
+    services: []
   });
   
   const [error, setError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Category data from API
+  const [categories, setCategories] = useState([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(false);
+  const [categoriesError, setCategoriesError] = useState(null);
   
   const { login } = useContext(AuthContext);
   const navigate = useNavigate();
+
+  // Fetch categories when role is plumber
+  useEffect(() => {
+    if (formData.role === 'plumber' && categories.length === 0) {
+      setCategoriesLoading(true);
+      setCategoriesError(null);
+      getCategories()
+        .then((data) => {
+          const list = data.data || data || [];
+          setCategories(Array.isArray(list) ? list : []);
+        })
+        .catch(() => {
+          setCategoriesError('Could not load services');
+        })
+        .finally(() => setCategoriesLoading(false));
+    }
+  }, [formData.role]);
 
   // Evaluate password strength dynamically
   useEffect(() => {
@@ -70,6 +93,16 @@ const Register = () => {
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const toggleService = (serviceName) => {
+    setFormData((prev) => {
+      const current = prev.services;
+      if (current.includes(serviceName)) {
+        return { ...prev, services: current.filter((s) => s !== serviceName) };
+      }
+      return { ...prev, services: [...current, serviceName] };
+    });
   };
 
   const handleNextStep = (e) => {
@@ -87,8 +120,8 @@ const Register = () => {
         setStep(3);
       }
     } else if (step === 3) {
-      if (!formData.experience || !formData.hourlyRate || !formData.services) {
-        return setError("Experience, Hourly Rate, and Services are required for Plumbers.");
+      if (!formData.experience || !formData.hourlyRate || formData.services.length === 0) {
+        return setError("Experience, Hourly Rate, and at least one Service are required.");
       }
       submitRegistration();
     }
@@ -113,8 +146,7 @@ const Register = () => {
         payload.bio = formData.bio;
         payload.experience = Number(formData.experience);
         payload.hourlyRate = Number(formData.hourlyRate);
-        // Split comma-separated string back into array securely
-        payload.services = formData.services.split(',').map(s => s.trim()).filter(Boolean);
+        payload.services = formData.services;
       }
 
       const data = await registerApi(payload);
@@ -135,6 +167,18 @@ const Register = () => {
     exit: { opacity: 0, x: -20, transition: { duration: 0.2 } }
   };
 
+  // Derive flat service names from categories for the checkbox grid
+  const serviceOptions = categories.flatMap((cat) =>
+    cat.services ? cat.services.map((s) => (typeof s === 'string' ? s : s.name)) : [cat.name]
+  );
+
+  const strengthColor = (threshold) => {
+    if (passwordStrength >= threshold) {
+      return passwordStrength === 100 ? 'var(--confirm-green)' : 'var(--amber-cta)';
+    }
+    return '#e0e0e0';
+  };
+
   return (
     <div className="auth-container split-layout">
       
@@ -153,12 +197,12 @@ const Register = () => {
 
       {/* Form Panel */}
       <div className="auth-form-panel">
-        <div className="auth-card" style={{ maxWidth: '440px', width: '100%' }}>
+        <div className="auth-card">
           <h2 className="auth-title">Create Account</h2>
-          <div className="register-steps" style={{ display: 'flex', gap: '8px', marginBottom: '20px', overflowX: 'auto' }}>
-            <div style={{ height: '4px', background: step >= 1 ? 'var(--confirm-green)' : '#e0e0e0', flex: 1, borderRadius: '2px', transition: '0.4s', minWidth: '40px' }} />
-            <div style={{ height: '4px', background: step >= 2 ? 'var(--confirm-green)' : '#e0e0e0', flex: 1, borderRadius: '2px', transition: '0.4s', minWidth: '40px' }} />
-            <div style={{ height: '4px', background: step >= 3 ? 'var(--confirm-green)' : formData.role === 'customer' ? 'transparent' : '#e0e0e0', flex: 1, borderRadius: '2px', transition: '0.4s', minWidth: '40px' }} />
+          <div className="register-steps">
+            <div className="step-bar" style={{ background: step >= 1 ? 'var(--confirm-green)' : '#e0e0e0' }} />
+            <div className="step-bar" style={{ background: step >= 2 ? 'var(--confirm-green)' : '#e0e0e0' }} />
+            <div className="step-bar" style={{ background: step >= 3 ? 'var(--confirm-green)' : formData.role === 'customer' ? 'transparent' : '#e0e0e0' }} />
           </div>
           
           <AnimatePresence mode="wait">
@@ -175,7 +219,7 @@ const Register = () => {
             )}
           </AnimatePresence>
 
-          <form onSubmit={handleNextStep} className="auth-form" style={{ marginTop: '10px' }}>
+          <form onSubmit={handleNextStep} className="auth-form">
             <AnimatePresence mode="wait">
               {step === 1 && (
                 <motion.div key="step1" variants={stepVariants} initial="hidden" animate="visible" exit="exit">
@@ -199,16 +243,16 @@ const Register = () => {
                     <label>Password</label>
                     <div className="input-wrapper" style={{ position: 'relative' }}>
                       <input type={showPassword ? "text" : "password"} name="password" className="premium-input animated-underline" value={formData.password} onChange={handleChange} required style={{ paddingRight: '40px' }}/>
-                      <div onClick={() => setShowPassword(!showPassword)} style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                      <div className="password-toggle" onClick={() => setShowPassword(!showPassword)}>
                         <EyeIcon show={showPassword} />
                       </div>
                     </div>
                     {/* Password Strength Indicator */}
-                    <div style={{ marginTop: '8px', display: 'flex', gap: '4px', alignItems: 'center' }}>
-                      <div style={{ height: '4px', flex: 1, borderRadius: '2px', background: passwordStrength >= 25 ? (passwordStrength === 100 ? 'var(--confirm-green)' : 'var(--amber-cta)') : '#e0e0e0', transition: '0.3s' }}/>
-                      <div style={{ height: '4px', flex: 1, borderRadius: '2px', background: passwordStrength >= 50 ? (passwordStrength === 100 ? 'var(--confirm-green)' : 'var(--amber-cta)') : '#e0e0e0', transition: '0.3s' }}/>
-                      <div style={{ height: '4px', flex: 1, borderRadius: '2px', background: passwordStrength >= 75 ? (passwordStrength === 100 ? 'var(--confirm-green)' : 'var(--amber-cta)') : '#e0e0e0', transition: '0.3s' }}/>
-                      <div style={{ height: '4px', flex: 1, borderRadius: '2px', background: passwordStrength >= 100 ? 'var(--confirm-green)' : '#e0e0e0', transition: '0.3s' }}/>
+                    <div className="strength-bar">
+                      <div className="strength-segment" style={{ background: strengthColor(25) }}/>
+                      <div className="strength-segment" style={{ background: strengthColor(50) }}/>
+                      <div className="strength-segment" style={{ background: strengthColor(75) }}/>
+                      <div className="strength-segment" style={{ background: strengthColor(100) }}/>
                     </div>
                   </div>
                 </motion.div>
@@ -217,30 +261,28 @@ const Register = () => {
               {step === 2 && (
                 <motion.div key="step2" variants={stepVariants} initial="hidden" animate="visible" exit="exit">
                   <p className="auth-subtitle">Step 2: Platform Identity</p>
-                  <label style={{ display: 'block', marginBottom: '12px', fontWeight: '500', color: 'var(--navy)' }}>I am looking to...</label>
+                  <label className="form-group" style={{ display: 'block', marginBottom: '12px' }}>I am looking to...</label>
                   
                   <div style={{ display: 'flex', gap: '16px', flexDirection: 'column' }}>
                     <div 
                       onClick={() => setFormData({...formData, role: 'customer'})}
-                      className="card-panel"
-                      style={{ border: formData.role === 'customer' ? '2px solid var(--confirm-green)' : '2px solid var(--sky)', background: formData.role === 'customer' ? '#f1f8f5' : 'var(--card-white)', padding: '20px', borderRadius: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '16px', transition: 'all 0.2s ease' }}
+                      className={`role-card ${formData.role === 'customer' ? 'selected' : ''}`}
                     >
-                      <div style={{ color: formData.role === 'customer' ? 'var(--confirm-green)' : 'var(--muted)' }}><UserIcon/></div>
+                      <div className="role-card-icon"><UserIcon/></div>
                       <div>
-                        <h4 style={{ margin: 0, color: 'var(--navy)', fontSize: '1.1rem' }}>Book Services</h4>
-                        <p style={{ margin: '4px 0 0', color: 'var(--muted)', fontSize: '0.85rem' }}>I need to hire a professional plumber</p>
+                        <h4 className="role-card-title">Book Services</h4>
+                        <p className="role-card-desc">I need to hire a professional plumber</p>
                       </div>
                     </div>
 
                     <div 
                       onClick={() => setFormData({...formData, role: 'plumber'})}
-                      className="card-panel"
-                      style={{ border: formData.role === 'plumber' ? '2px solid var(--confirm-green)' : '2px solid var(--sky)', background: formData.role === 'plumber' ? '#f1f8f5' : 'var(--card-white)', padding: '20px', borderRadius: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '16px', transition: 'all 0.2s ease' }}
+                      className={`role-card ${formData.role === 'plumber' ? 'selected' : ''}`}
                     >
-                      <div style={{ color: formData.role === 'plumber' ? 'var(--confirm-green)' : 'var(--muted)' }}><WrenchIcon/></div>
+                      <div className="role-card-icon"><WrenchIcon/></div>
                       <div>
-                        <h4 style={{ margin: 0, color: 'var(--navy)', fontSize: '1.1rem' }}>Provide Services</h4>
-                        <p style={{ margin: '4px 0 0', color: 'var(--muted)', fontSize: '0.85rem' }}>I am a plumber accepting clients</p>
+                        <h4 className="role-card-title">Provide Services</h4>
+                        <p className="role-card-desc">I am a plumber accepting clients</p>
                       </div>
                     </div>
                   </div>
@@ -251,7 +293,7 @@ const Register = () => {
                 <motion.div key="step3" variants={stepVariants} initial="hidden" animate="visible" exit="exit">
                   <p className="auth-subtitle">Step 3: Professional Setup</p>
 
-                  <div style={{ display: 'flex', gap: '12px' }}>
+                  <div className="form-row" style={{ display: 'flex', gap: '12px' }}>
                     <div className="form-group" style={{ flex: 1 }}>
                       <label>Hourly Rate ($)</label>
                       <div className="input-wrapper"><input type="number" name="hourlyRate" className="premium-input animated-underline" value={formData.hourlyRate} onChange={handleChange} placeholder="e.g. 50" required/></div>
@@ -263,8 +305,36 @@ const Register = () => {
                   </div>
 
                   <div className="form-group">
-                    <label>Services (Comma separated)</label>
-                    <div className="input-wrapper"><input type="text" name="services" className="premium-input animated-underline" value={formData.services} onChange={handleChange} placeholder="Pipe Repair, Installation, Drain Cleaning" required/></div>
+                    <label>Services</label>
+                    {categoriesLoading ? (
+                      <p className="category-loading">Loading available services…</p>
+                    ) : categoriesError || serviceOptions.length === 0 ? (
+                      /* Fallback to free-text input if API categories unavailable */
+                      <div className="input-wrapper">
+                        <input
+                          type="text"
+                          name="servicesFallback"
+                          className="premium-input animated-underline"
+                          placeholder="Pipe Repair, Installation, Drain Cleaning"
+                          value={formData.services.join(', ')}
+                          onChange={(e) => setFormData({...formData, services: e.target.value.split(',').map(s => s.trim()).filter(Boolean)})}
+                          required
+                        />
+                      </div>
+                    ) : (
+                      <div className="category-grid">
+                        {serviceOptions.map((svc) => (
+                          <label key={svc} className={`category-chip ${formData.services.includes(svc) ? 'active' : ''}`}>
+                            <input
+                              type="checkbox"
+                              checked={formData.services.includes(svc)}
+                              onChange={() => toggleService(svc)}
+                            />
+                            {svc}
+                          </label>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
                   <div className="form-group">
@@ -277,9 +347,9 @@ const Register = () => {
               )}
             </AnimatePresence>
 
-            <div style={{ marginTop: '24px', display: 'flex', gap: '12px' }}>
+            <div className="auth-actions-row">
               {step > 1 && (
-                <button type="button" onClick={() => setStep(step - 1)} className="btn-outline" style={{ padding: '12px 24px' }}>
+                <button type="button" onClick={() => setStep(step - 1)} className="btn-outline">
                   Back
                 </button>
               )}
@@ -303,7 +373,7 @@ const Register = () => {
             </div>
           </form>
 
-          <div className="auth-footer" style={{ marginTop: '24px' }}>
+          <div className="auth-footer">
             Already have an account? <Link to="/login">Log In Instead</Link>
           </div>
         </div>

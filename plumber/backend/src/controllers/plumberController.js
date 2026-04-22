@@ -1,9 +1,10 @@
 const User = require('../models/User');
+const { createHttpError } = require('../utils/httpError');
 
 // @desc    Get all plumbers
 // @route   GET /api/plumbers
 // @access  Public
-const getPlumbers = async (req, res) => {
+const getPlumbers = async (req, res, next) => {
   try {
     const filter = { role: 'plumber' };
 
@@ -18,42 +19,33 @@ const getPlumbers = async (req, res) => {
 
     const plumbers = await User.find(filter).select('-password');
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       count: plumbers.length,
       data: plumbers,
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message || 'Server Error retrieving plumbers',
-    });
+    return next(error);
   }
 };
 
 // @desc    Get a single plumber
 // @route   GET /api/plumbers/:id
 // @access  Public
-const getPlumberById = async (req, res) => {
+const getPlumberById = async (req, res, next) => {
   try {
     const plumber = await User.findOne({ _id: req.params.id, role: 'plumber' }).select('-password');
 
     if (!plumber) {
-      return res.status(404).json({
-        success: false,
-        message: 'Plumber not found',
-      });
+      return next(createHttpError(404, 'Plumber not found'));
     }
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       data: plumber,
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message || 'Server Error retrieving plumber profile',
-    });
+    return next(error);
   }
 };
 

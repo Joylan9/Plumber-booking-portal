@@ -71,10 +71,10 @@ All aesthetic configurations are heavily enforced via native CSS Variables mappe
 ### Backend Stack (Node.js / Express / MongoDB)
 | Module | Core Functionality |
 | :--- | :--- |
-| **`User.js` Model** | Dual-Role Schema parsing `experience`, `hourlyRate`, and `services` securely. Built-in `bcrypt` middleware and natively hashed `crypto` Reset Tokens. |
-| **Authentication Controller** | Handling native JWT allocations and dynamic POST loops dispatching strict 6-digit cryptographic codes using `nodemailer`. |
-| **`Booking.js` Model** | Relational data tracking referencing Customer and Plumber ObjectIDs simultaneously. |
-| **Reviews & Categories** | Robust schemas ensuring service categories and customer ratings are strictly tracked and relational. |
+| **`User.js` Model** | Dual-role schema with plumber profile fields, stored `rating` / `totalReviews`, and an `averageRating` virtual backed by aggregation logic. |
+| **Authentication Controller** | Handles JWT auth, OTP-based password reset, and token-link reset compatibility for the existing frontend route. |
+| **`Booking.js` Model** | Tracks `customerId`, `plumberId`, `serviceType`, booking status transitions, and indexed booking lookups. |
+| **Reviews & Categories** | Includes review creation, plumber review pagination, public category reads, admin category creation, and idempotent category seeding. |
 
 ### Frontend Stack (React 19 / Vite / Framer Motion)
 | Animation Logic Layer | Execution Implementation |
@@ -153,8 +153,10 @@ cd backend
 # 2. Setup your local Environment Variables (.env)
 #    Create a .env file locally directly in the /backend folder:
 PORT=5000
+MONGO_URI=mongodb://localhost:27017/plumber_booking_portal
 MONGODB_URI=mongodb://localhost:27017/plumber_booking_portal
 JWT_SECRET=supersecretjwtkey_replace_me_in_production
+FRONTEND_URL=http://localhost:5173
 
 # Enterprise Email Dispatch (Nodemailer Settings)
 SMTP_HOST=smtp.gmail.com
@@ -162,11 +164,14 @@ SMTP_PORT=587
 SMTP_EMAIL=your_email_here@gmail.com
 SMTP_PASSWORD=your_secure_app_password
 FROM_EMAIL=noreply@flowmatch.com
-FROM_NAME="Plumber Booking Express"
+FROM_NAME="FlowMatch"
 
 # 3. Install dependencies and start the development server
 npm install
 npm run dev
+
+# Optional: seed booking categories
+npm run seed:categories
 ```
 
 ### B. Frontend Boot Sequence
@@ -176,7 +181,7 @@ cd frontend
 
 # 2. Connect environment linking mapped strictly to the Backend Node
 #    Create a .env file locally directly in the /frontend folder:
-VITE_API_BASE_URL=http://localhost:5000/api
+VITE_API_URL=http://localhost:5000
 
 # 3. Mount React Bundler globally and spin up Vite UI
 npm install
@@ -184,7 +189,39 @@ npm run dev
 ```
 
 > [!CAUTION]
-> **API Configuration Notice:** Because standard testing parameters assume active backend nodes, if you see the **Skeleton Loaders loading infinitely** or catch a `Network Error`, verify the `MongoDB` connection has fully initialized prior to launching the Frontend and that your `.env` contains `VITE_API_BASE_URL`!
+> **API Configuration Notice:** If you see `Network Error` responses or loaders that never resolve, verify MongoDB is running, the backend `.env` is configured, and the frontend uses `VITE_API_URL`.
+
+### Backend API Notes
+```text
+POST   /api/auth/register
+POST   /api/auth/login
+POST   /api/auth/forgot-password
+POST   /api/auth/reset-password
+POST   /api/auth/reset-password/:token
+PUT    /api/auth/reset-password/:token
+
+GET    /api/plumbers
+GET    /api/plumbers/:id
+
+POST   /api/bookings
+GET    /api/bookings
+GET    /api/bookings/my-bookings
+GET    /api/bookings/:id
+PUT    /api/bookings/:id/status
+PATCH  /api/bookings/:id/status
+
+POST   /api/reviews
+GET    /api/reviews/plumber/:plumberId
+
+GET    /api/categories
+POST   /api/categories
+```
+
+### Deployment Notes
+- Use `MONGO_URI` or `MONGODB_URI` for the backend database connection.
+- Set `FRONTEND_URL` to the deployed frontend origin so CORS allows the production app.
+- Use `npm run seed:categories` to preload the default plumbing service categories.
+- The repo now ignores `plumber/Database/`; use MongoDB Atlas or another managed MongoDB deployment for production.
 
 ---
 

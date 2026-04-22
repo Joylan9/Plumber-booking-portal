@@ -156,3 +156,181 @@
 .auth-footer a {
     font-weight: 600;
 }
+
+/* Register Step Progress Bar */
+.register-steps {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    overflow-x: auto;
+}
+
+.step-bar {
+    height: 4px;
+    flex: 1;
+    border-radius: 2px;
+    transition: background 0.4s;
+    min-width: 40px;
+}
+
+/* Role Selection Cards */
+.role-card {
+    border: 2px solid var(--sky);
+    background: var(--card-white);
+    padding: 20px;
+    border-radius: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    transition: all 0.2s ease;
+}
+
+.role-card.selected {
+    border-color: var(--confirm-green);
+    background: #f1f8f5;
+}
+
+.role-card-icon {
+    color: var(--muted);
+}
+
+.role-card.selected .role-card-icon {
+    color: var(--confirm-green);
+}
+
+.role-card-title {
+    margin: 0;
+    color: var(--navy);
+    font-size: 1.1rem;
+}
+
+.role-card-desc {
+    margin: 4px 0 0;
+    color: var(--muted);
+    font-size: 0.85rem;
+}
+
+/* Password Toggle */
+.password-toggle {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+}
+
+/* Password Strength Indicator */
+.strength-bar {
+    margin-top: 8px;
+    display: flex;
+    gap: 4px;
+    align-items: center;
+}
+
+.strength-segment {
+    height: 4px;
+    flex: 1;
+    border-radius: 2px;
+    transition: background 0.3s;
+}
+
+/* Auth Actions Row */
+.auth-actions-row {
+    margin-top: 24px;
+    display: flex;
+    gap: 12px;
+}
+
+/* Auth Success Message */
+.auth-success {
+    background: #E8F5E9;
+    color: var(--confirm-green);
+    border: 1px solid var(--confirm-green);
+    padding: 12px;
+    border-radius: 6px;
+    margin-bottom: 24px;
+    font-size: 0.9rem;
+}
+
+/* OTP Input */
+.otp-input {
+    letter-spacing: 2px;
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
+/* Success Checkmark */
+.auth-success-check {
+    font-size: 4rem;
+    color: var(--confirm-green);
+    margin-bottom: 20px;
+    display: inline-block;
+}
+
+/* Forgot Password Link */
+.forgot-link {
+    text-align: right;
+    margin-top: 8px;
+}
+
+.forgot-link a {
+    font-size: 0.85rem;
+    color: var(--clear-blue);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+/* Category Checkboxes */
+.category-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+}
+
+@media (min-width: 480px) {
+    .category-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+.category-chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    border: 1px solid var(--sky);
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--navy);
+    transition: all 0.2s ease;
+    background: var(--mist);
+    user-select: none;
+}
+
+.category-chip.active {
+    border-color: var(--confirm-green);
+    background: #f1f8f5;
+    color: var(--confirm-green);
+    font-weight: 600;
+}
+
+.category-chip input[type="checkbox"] {
+    accent-color: var(--confirm-green);
+    width: 14px;
+    height: 14px;
+    margin: 0;
+}
+
+/* Category loading / error in register */
+.category-loading {
+    color: var(--muted);
+    font-size: 0.85rem;
+    padding: 12px;
+    text-align: center;
+}
+

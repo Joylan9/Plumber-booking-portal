@@ -4,7 +4,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import ErrorBoundary from './components/ErrorBoundary';
 import Navbar from './components/Navbar';
 import ToastContainer from './components/Toast';
-import Footer from './components/Footer';
+
 import PageWrapper from './components/PageWrapper';
 import ProtectedRoute from './routes/ProtectedRoute';
 
@@ -64,6 +64,9 @@ const AnimatedRoutes = () => {
             <PageWrapper><BookingDetail /></PageWrapper>
           </ProtectedRoute>
         } />
+
+        {/* Catch-all — redirect unknown paths */}
+        <Route path="*" element={<PageWrapper><Home /></PageWrapper>} />
       </Routes>
     </AnimatePresence>
   );

@@ -108,7 +108,6 @@ const ForgotPassword = () => {
                 initial={{ opacity: 0, y: -15, height: 0 }}
                 animate={{ opacity: 1, y: 0, height: 'auto' }}
                 exit={{ opacity: 0, scale: 0.95, height: 0 }}
-                style={!isError ? { background: '#E8F5E9', color: 'var(--confirm-green)', border: '1px solid var(--confirm-green)', padding: '12px', borderRadius: '6px', marginBottom: '24px', fontSize: '0.9rem' } : {}}
               >
                 {statusMsg}
               </motion.div>
@@ -163,13 +162,12 @@ const ForgotPassword = () => {
                 <div className="input-wrapper">
                   <input 
                     type="text" 
-                    className="premium-input animated-underline" 
+                    className="premium-input animated-underline otp-input" 
                     value={otp}
                     onChange={(e) => setOtp(e.target.value)}
                     placeholder="e.g. 849301"
                     maxLength={6}
                     required
-                    style={{ letterSpacing: '2px', fontSize: '1.2rem', fontWeight: 'bold' }}
                   />
                 </div>
               </div>
@@ -185,10 +183,7 @@ const ForgotPassword = () => {
                     required
                     style={{ paddingRight: '40px' }}
                   />
-                  <div 
-                    onClick={() => setShowPassword(!showPassword)}
-                    style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
-                  >
+                  <div className="password-toggle" onClick={() => setShowPassword(!showPassword)}>
                     <EyeIcon show={showPassword} />
                   </div>
                 </div>
@@ -215,9 +210,9 @@ const ForgotPassword = () => {
           {step === 3 && (
             <div className="auth-form" style={{ marginTop: '20px', textAlign: 'center' }}>
               <motion.div 
+                className="auth-success-check"
                 animate={{ scale: [0.8, 1.1, 1] }} 
                 transition={{ duration: 0.5 }}
-                style={{ fontSize: '4rem', color: 'var(--confirm-green)', marginBottom: '20px', display: 'inline-block' }}
               >
                 ✓
               </motion.div>
@@ -234,7 +229,7 @@ const ForgotPassword = () => {
           )}
 
           {step !== 3 && (
-            <div className="auth-footer" style={{ marginTop: '30px' }}>
+            <div className="auth-footer">
               Remembered your password? <Link to="/login">Back to Login</Link>
             </div>
           )}

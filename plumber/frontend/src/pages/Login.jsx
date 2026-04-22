@@ -109,15 +109,12 @@ const Login = () => {
                   required
                   style={{ paddingRight: '40px' }}
                 />
-                <div 
-                  onClick={() => setShowPassword(!showPassword)}
-                  style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
-                >
+                <div className="password-toggle" onClick={() => setShowPassword(!showPassword)}>
                   <EyeIcon show={showPassword} />
                 </div>
               </div>
-              <div style={{ textAlign: 'right', marginTop: '8px' }}>
-                <Link to="/forgot-password" style={{ fontSize: '0.85rem', color: 'var(--clear-blue)', textDecoration: 'none', fontWeight: '500' }}>Forgot password?</Link>
+              <div className="forgot-link">
+                <Link to="/forgot-password">Forgot password?</Link>
               </div>
             </div>
 

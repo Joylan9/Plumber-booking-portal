@@ -1,25 +1,60 @@
 const Booking = require('../models/Booking');
 const User = require('../models/User');
+const { createHttpError } = require('../utils/httpError');
 
-// @desc    Create a new booking
-// @route   POST /api/bookings
-// @access  Private (Customer only)
-const createBooking = async (req, res) => {
+const BOOKING_POPULATE = [
+  { path: 'customerId', select: 'name email phone area' },
+  { path: 'plumberId', select: 'name email phone area services hourlyRate rating totalReviews experience' },
+];
+
+const VALID_STATUSES = ['pending', 'accepted', 'completed', 'cancelled'];
+
+const VALID_STATUS_TRANSITIONS = {
+  pending: ['accepted', 'cancelled'],
+  accepted: ['completed', 'cancelled'],
+  completed: [],
+  cancelled: [],
+};
+
+const populateBooking = (query) => BOOKING_POPULATE.reduce(
+  (currentQuery, populateConfig) => currentQuery.populate(populateConfig),
+  query
+);
+
+const getBookingAccessFilter = (user) => {
+  if (user.role === 'customer') {
+    return { customerId: user._id };
+  }
+
+  if (user.role === 'plumber') {
+    return { plumberId: user._id };
+  }
+
+  if (user.role === 'admin') {
+    return {};
+  }
+
+  throw createHttpError(403, 'Unauthorized profile access');
+};
+
+const createBooking = async (req, res, next) => {
   try {
-    const { plumberId, date, time, address, issueDescription, notes } = req.body;
+    const { plumberId, serviceType, date, time, address, issueDescription, notes } = req.body;
 
-    // Validate Plumber Existence and Identity
+    if (!plumberId || !serviceType || !date || !time || !address || !issueDescription) {
+      return next(createHttpError(400, 'Plumber, service type, date, time, address, and issue description are required'));
+    }
+
     const plumber = await User.findById(plumberId);
+
     if (!plumber || plumber.role !== 'plumber') {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid plumber requested',
-      });
+      return next(createHttpError(400, 'Invalid plumber requested', 'plumberId'));
     }
 
     const booking = await Booking.create({
       customerId: req.user._id,
       plumberId,
+      serviceType,
       date,
       time,
       address,
@@ -27,120 +62,113 @@ const createBooking = async (req, res) => {
       notes,
     });
 
-    res.status(201).json({
+    const populatedBooking = await populateBooking(Booking.findById(booking._id));
+
+    return res.status(201).json({
       success: true,
-      data: booking,
+      data: populatedBooking,
       message: 'Booking created successfully',
     });
   } catch (error) {
-    if (error.name === 'ValidationError') {
-      return res.status(400).json({
-        success: false,
-        message: Object.values(error.errors).map(val => val.message).join(', ')
-      });
-    }
-    res.status(500).json({
-      success: false,
-      message: error.message || 'Server Error creating booking',
-    });
+    return next(error);
   }
 };
 
-// @desc    Get logged in user's bookings
-// @route   GET /api/bookings/my-bookings
-// @access  Private
-const getMyBookings = async (req, res) => {
+const getMyBookings = async (req, res, next) => {
   try {
-    let filter = {};
-
-    // Differentiate query based on user role natively
-    if (req.user.role === 'customer') {
-      filter.customerId = req.user._id;
-    } else if (req.user.role === 'plumber') {
-      filter.plumberId = req.user._id;
-    } else {
-      // Admin sees all? Let's just catch admin later or default to all.
-      if (req.user.role !== 'admin') {
-         // Failsafe
-         return res.status(403).json({ success: false, message: 'Unauthorized profile access' });
-      }
-    }
-
-    // Populate the reference user fields securely removing passwords
-    const bookings = await Booking.find(filter)
-      .populate('customerId', 'name email phone area')
-      .populate('plumberId', 'name email phone services hourlyRate')
+    const filter = getBookingAccessFilter(req.user);
+    const bookings = await populateBooking(Booking.find(filter))
       .sort({ createdAt: -1 });
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       count: bookings.length,
       data: bookings,
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message || 'Server Error retrieving bookings',
-    });
+    return next(error);
   }
 };
 
-// @desc    Update booking status
-// @route   PUT /api/bookings/:id/status
-// @access  Private (Plumber only natively, but can expand to Admin)
-const updateBookingStatus = async (req, res) => {
+const getBookingById = async (req, res, next) => {
   try {
-    const { status } = req.body;
-    let booking = await Booking.findById(req.params.id);
+    const booking = await populateBooking(Booking.findById(req.params.id));
 
     if (!booking) {
-      return res.status(404).json({
-        success: false,
-        message: 'Booking not found',
-      });
+      return next(createHttpError(404, 'Booking not found'));
     }
 
-    // Ensure the plumber making the request is the assigned plumber
-    if (booking.plumberId.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
-       return res.status(403).json({
-         success: false,
-         message: 'Not authorized to update this booking status',
-       });
+    const canAccess = req.user.role === 'admin'
+      || booking.customerId?._id?.toString() === req.user._id.toString()
+      || booking.plumberId?._id?.toString() === req.user._id.toString();
+
+    if (!canAccess) {
+      return next(createHttpError(403, 'Not authorized'));
     }
 
-    if (!['pending', 'accepted', 'completed', 'cancelled'].includes(status)) {
-       return res.status(400).json({
-         success: false,
-         message: 'Invalid status update command',
-       });
+    return res.status(200).json({
+      success: true,
+      data: booking,
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+const updateBookingStatus = async (req, res, next) => {
+  try {
+    const { status } = req.body;
+
+    if (!status || !VALID_STATUSES.includes(status)) {
+      return next(createHttpError(400, 'Invalid status update command', 'status'));
+    }
+
+    const booking = await Booking.findById(req.params.id);
+
+    if (!booking) {
+      return next(createHttpError(404, 'Booking not found'));
+    }
+
+    const isAssignedPlumber = booking.plumberId.toString() === req.user._id.toString();
+    if (!isAssignedPlumber && req.user.role !== 'admin') {
+      return next(createHttpError(403, 'Not authorized to update this booking status'));
+    }
+
+    if (!VALID_STATUS_TRANSITIONS[booking.status].includes(status)) {
+      return next(createHttpError(
+        400,
+        `Cannot change booking status from ${booking.status} to ${status}`,
+        'status'
+      ));
     }
 
     booking.status = status;
 
     if (status === 'completed') {
-      booking.completedAt = Date.now();
-    } else if (status === 'cancelled') {
-      booking.cancelledAt = Date.now();
+      booking.completedAt = new Date();
+    }
+
+    if (status === 'cancelled') {
+      booking.cancelledAt = new Date();
     }
 
     await booking.save();
 
-    res.status(200).json({
-      success: true,
-      data: booking,
-      message: `Booking seamlessly transitioned to ${status}`
-    });
+    const populatedBooking = await populateBooking(Booking.findById(booking._id));
 
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message || 'Server Error updating booking',
+    return res.status(200).json({
+      success: true,
+      data: populatedBooking,
+      message: `Booking updated to ${status}`,
     });
+  } catch (error) {
+    return next(error);
   }
 };
 
 module.exports = {
   createBooking,
   getMyBookings,
-  updateBookingStatus
+  getBookingById,
+  updateBookingStatus,
 };

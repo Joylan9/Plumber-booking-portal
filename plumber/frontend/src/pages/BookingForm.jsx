@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { createBooking } from '../services/bookingService';
 import { getPlumbers } from '../services/plumberService';
 import { toast } from '../components/Toast';
+import SkeletonLoader from '../components/SkeletonLoader';
 import './BookingForm.css';
 
 const TIME_SLOTS = [];
@@ -30,9 +31,11 @@ const BookingForm = () => {
   const [errors, setErrors] = useState({});
   const [error, setError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [plumbersLoading, setPlumbersLoading] = useState(true);
 
   useEffect(() => {
     const fetchPlumbers = async () => {
+      setPlumbersLoading(true);
       try {
         const res = await getPlumbers();
         if (res.success) {
@@ -46,6 +49,8 @@ const BookingForm = () => {
         }
       } catch (err) {
         console.error("Error fetching plumbers", err);
+      } finally {
+        setPlumbersLoading(false);
       }
     };
     fetchPlumbers();
@@ -114,14 +119,18 @@ const BookingForm = () => {
           <div className="form-row">
             <div className="form-group">
               <label>Select Plumber</label>
-              <select name="plumberId" className="premium-input" value={formData.plumberId} onChange={handleChange}>
-                <option value="">Choose an expert...</option>
-                {plumbers.map(p => (
-                  <option key={p._id} value={p._id}>
-                    {p.name} — ${p.hourlyRate || 0}/hr ({p.experience || 0} yrs)
-                  </option>
-                ))}
-              </select>
+              {plumbersLoading ? (
+                <SkeletonLoader rows={1} />
+              ) : (
+                <select name="plumberId" className="premium-input" value={formData.plumberId} onChange={handleChange}>
+                  <option value="">Choose an expert...</option>
+                  {plumbers.map(p => (
+                    <option key={p._id} value={p._id}>
+                      {p.name} — ${p.hourlyRate || 0}/hr ({p.experience || 0} yrs)
+                    </option>
+                  ))}
+                </select>
+              )}
               {errors.plumberId && <span className="field-error">{errors.plumberId}</span>}
             </div>
           </div>

@@ -3,6 +3,7 @@ const dotenv = require('dotenv');
 const cors = require('cors');
 const connectDB = require('./config/db');
 const { notFound, errorHandler } = require('./middleware/errorMiddleware');
+const { createHttpError } = require('./utils/httpError');
 
 // Core internal routes
 const authRoutes = require('./routes/authRoutes');
@@ -26,7 +27,7 @@ const allowedOrigins = [
 ];
 
 if (process.env.FRONTEND_URL) {
-  allowedOrigins.push(process.env.FRONTEND_URL);
+  allowedOrigins.push(process.env.FRONTEND_URL.replace(/\/$/, ''));
 }
 
 // Middleware
@@ -37,7 +38,7 @@ app.use(cors({
       return callback(null, true);
     }
 
-    return callback(new Error('Origin not allowed by CORS'));
+    return callback(createHttpError(403, 'Origin not allowed by CORS'));
   },
 }));
 

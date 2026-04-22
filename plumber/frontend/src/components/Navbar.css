@@ -152,3 +152,27 @@
         width: auto;
     }
 }
+
+/* Compact button sizing for navbar */
+.nav-btn-sm {
+    padding: 8px 16px;
+    font-size: 0.85rem;
+}
+
+.nav-signup-wrap {
+    width: 100%;
+}
+
+.nav-signup-btn {
+    width: 100%;
+}
+
+@media (min-width: 768px) {
+    .nav-signup-wrap {
+        width: auto;
+    }
+    .nav-signup-btn {
+        width: auto;
+    }
+}
+

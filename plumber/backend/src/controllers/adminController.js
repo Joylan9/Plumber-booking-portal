@@ -1,8 +1,12 @@
+const mongoose = require('mongoose');
 const User = require('../models/User');
 const Booking = require('../models/Booking');
 const Review = require('../models/Review');
 const Category = require('../models/Category');
 const { createHttpError } = require('../utils/httpError');
+
+// Helper to validate Mongo ID
+const isValidId = (id) => mongoose.isValidObjectId(id);
 
 // ==========================================
 // USERS MANAGEMENT
@@ -13,10 +17,24 @@ const getAllUsers = async (req, res, next) => {
     const { role } = req.query;
     const filter = role ? { role } : {};
     
-    // Do not return password or tokens
-    const users = await User.find(filter).select('-password -resetPasswordToken -resetPasswordExpire').sort({ createdAt: -1 });
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
     
-    res.status(200).json({ success: true, data: users });
+    const total = await User.countDocuments(filter);
+    
+    // Do not return password or tokens
+    const users = await User.find(filter)
+      .select('-password -resetPasswordToken -resetPasswordExpire')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+    
+    res.status(200).json({ 
+      success: true, 
+      data: users,
+      pagination: { page, limit, total }
+    });
   } catch (error) {
     next(error);
   }
@@ -24,7 +42,8 @@ const getAllUsers = async (req, res, next) => {
 
 const getUserById = async (req, res, next) => {
   try {
-    const user = await User.findById(req.params.id).select('-password');
+    if (!isValidId(req.params.id)) return next(createHttpError(400, 'Invalid User ID'));
+    const user = await User.findById(req.params.id).select('-password -resetPasswordToken -resetPasswordExpire');
     if (!user) return next(createHttpError(404, 'User not found'));
     res.status(200).json({ success: true, data: user });
   } catch (error) {
@@ -34,24 +53,26 @@ const getUserById = async (req, res, next) => {
 
 const updateUser = async (req, res, next) => {
   try {
-    const { name, phone, area, role, isActive } = req.body;
+    if (!isValidId(req.params.id)) return next(createHttpError(400, 'Invalid User ID'));
+    
+    // Destructure ONLY allowed fields. DO NOT allow role or password changes here.
+    const { name, phone, area, bio, experience, hourlyRate, services } = req.body;
     const user = await User.findById(req.params.id);
     
     if (!user) return next(createHttpError(404, 'User not found'));
     
-    // Prevent admin from removing their own admin status accidentally
-    if (user._id.toString() === req.user._id.toString() && role && role !== 'admin') {
-      return next(createHttpError(403, 'Cannot demote yourself'));
-    }
-
-    if (name) user.name = name;
+    if (name !== undefined) user.name = name;
     if (phone !== undefined) user.phone = phone;
     if (area !== undefined) user.area = area;
-    if (role && ['customer', 'plumber', 'admin'].includes(role)) user.role = role;
+    if (bio !== undefined) user.bio = bio;
+    if (experience !== undefined) user.experience = experience;
+    if (hourlyRate !== undefined) user.hourlyRate = hourlyRate;
+    if (services !== undefined) user.services = services;
     
     await user.save({ validateBeforeSave: false }); // Skip strict validation for admin edits
     
-    res.status(200).json({ success: true, data: user, message: 'User updated successfully' });
+    const updatedUser = await User.findById(req.params.id).select('-password -resetPasswordToken -resetPasswordExpire');
+    res.status(200).json({ success: true, data: updatedUser, message: 'User updated successfully' });
   } catch (error) {
     next(error);
   }
@@ -59,15 +80,22 @@ const updateUser = async (req, res, next) => {
 
 const deleteUser = async (req, res, next) => {
   try {
+    if (!isValidId(req.params.id)) return next(createHttpError(400, 'Invalid User ID'));
+    
     const user = await User.findById(req.params.id);
     if (!user) return next(createHttpError(404, 'User not found'));
-    
-    if (user._id.toString() === req.user._id.toString()) {
-      return next(createHttpError(403, 'Cannot delete yourself'));
-    }
 
     await User.findByIdAndDelete(req.params.id);
-    res.status(200).json({ success: true, message: 'User deleted successfully' });
+    
+    // Cascade delete associated bookings and reviews
+    await Booking.deleteMany({ 
+      $or: [{ customerId: req.params.id }, { plumberId: req.params.id }] 
+    });
+    await Review.deleteMany({ 
+      $or: [{ customerId: req.params.id }, { plumberId: req.params.id }] 
+    });
+
+    res.status(200).json({ success: true, message: 'User and associated data deleted successfully' });
   } catch (error) {
     next(error);
   }
@@ -79,12 +107,31 @@ const deleteUser = async (req, res, next) => {
 
 const getAllBookings = async (req, res, next) => {
   try {
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+    
+    const total = await Booking.countDocuments();
+    
     const bookings = await Booking.find()
       .populate('customerId', 'name email')
       .populate('plumberId', 'name email')
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
       
-    res.status(200).json({ success: true, data: bookings });
+    // Safely map responses to avoid null populated reference crashes
+    const safeBookings = bookings.map(b => ({
+      ...b.toObject(),
+      customerId: b.customerId || { _id: null, name: 'Deleted User', email: '' },
+      plumberId: b.plumberId || { _id: null, name: 'Deleted User', email: '' }
+    }));
+      
+    res.status(200).json({ 
+      success: true, 
+      data: safeBookings,
+      pagination: { page, limit, total }
+    });
   } catch (error) {
     next(error);
   }
@@ -92,12 +139,21 @@ const getAllBookings = async (req, res, next) => {
 
 const getBookingById = async (req, res, next) => {
   try {
+    if (!isValidId(req.params.id)) return next(createHttpError(400, 'Invalid Booking ID'));
+    
     const booking = await Booking.findById(req.params.id)
       .populate('customerId', 'name email phone')
       .populate('plumberId', 'name email phone');
       
     if (!booking) return next(createHttpError(404, 'Booking not found'));
-    res.status(200).json({ success: true, data: booking });
+    
+    const safeBooking = {
+      ...booking.toObject(),
+      customerId: booking.customerId || { _id: null, name: 'Deleted User', email: '', phone: '' },
+      plumberId: booking.plumberId || { _id: null, name: 'Deleted User', email: '', phone: '' }
+    };
+    
+    res.status(200).json({ success: true, data: safeBooking });
   } catch (error) {
     next(error);
   }
@@ -105,6 +161,8 @@ const getBookingById = async (req, res, next) => {
 
 const deleteBooking = async (req, res, next) => {
   try {
+    if (!isValidId(req.params.id)) return next(createHttpError(400, 'Invalid Booking ID'));
+    
     const booking = await Booking.findById(req.params.id);
     if (!booking) return next(createHttpError(404, 'Booking not found'));
     
@@ -121,12 +179,30 @@ const deleteBooking = async (req, res, next) => {
 
 const getAllReviews = async (req, res, next) => {
   try {
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+    
+    const total = await Review.countDocuments();
+    
     const reviews = await Review.find()
       .populate('customerId', 'name')
       .populate('plumberId', 'name')
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
       
-    res.status(200).json({ success: true, data: reviews });
+    const safeReviews = reviews.map(r => ({
+      ...r.toObject(),
+      customerId: r.customerId || { _id: null, name: 'Deleted User' },
+      plumberId: r.plumberId || { _id: null, name: 'Deleted User' }
+    }));
+      
+    res.status(200).json({ 
+      success: true, 
+      data: safeReviews,
+      pagination: { page, limit, total }
+    });
   } catch (error) {
     next(error);
   }
@@ -134,6 +210,8 @@ const getAllReviews = async (req, res, next) => {
 
 const deleteReview = async (req, res, next) => {
   try {
+    if (!isValidId(req.params.id)) return next(createHttpError(400, 'Invalid Review ID'));
+    
     const review = await Review.findById(req.params.id);
     if (!review) return next(createHttpError(404, 'Review not found'));
     
@@ -141,10 +219,13 @@ const deleteReview = async (req, res, next) => {
     
     await Review.findByIdAndDelete(req.params.id);
     
-    // Update plumber stats after deletion
+    // Update plumber stats after deletion, if plumber still exists
     if (plumberId) {
-      const { averageRating, totalReviews } = await User.getAverageRating(plumberId);
-      await User.findByIdAndUpdate(plumberId, { rating: averageRating, totalReviews });
+      const plumberExists = await User.findById(plumberId);
+      if (plumberExists) {
+        const { averageRating, totalReviews } = await User.getAverageRating(plumberId);
+        await User.findByIdAndUpdate(plumberId, { rating: averageRating, totalReviews });
+      }
     }
     
     res.status(200).json({ success: true, message: 'Review deleted successfully' });
@@ -180,6 +261,8 @@ const createCategory = async (req, res, next) => {
 
 const updateCategory = async (req, res, next) => {
   try {
+    if (!isValidId(req.params.id)) return next(createHttpError(400, 'Invalid Category ID'));
+    
     const { name, description, isActive } = req.body;
     const category = await Category.findById(req.params.id);
     
@@ -198,6 +281,8 @@ const updateCategory = async (req, res, next) => {
 
 const deleteCategory = async (req, res, next) => {
   try {
+    if (!isValidId(req.params.id)) return next(createHttpError(400, 'Invalid Category ID'));
+    
     const category = await Category.findById(req.params.id);
     if (!category) return next(createHttpError(404, 'Category not found'));
     

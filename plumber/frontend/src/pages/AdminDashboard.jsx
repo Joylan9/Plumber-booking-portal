@@ -24,8 +24,16 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   
   const [users, setUsers] = useState([]);
+  const [usersPage, setUsersPage] = useState(1);
+  const [usersHasMore, setUsersHasMore] = useState(false);
+
   const [bookings, setBookings] = useState([]);
+  const [bookingsPage, setBookingsPage] = useState(1);
+  const [bookingsHasMore, setBookingsHasMore] = useState(false);
+
   const [reviews, setReviews] = useState([]);
+  const [reviewsPage, setReviewsPage] = useState(1);
+  const [reviewsHasMore, setReviewsHasMore] = useState(false);
   const [categories, setCategories] = useState([]);
 
   const [modal, setModal] = useState({ open: false, id: null, type: '', action: '' });
@@ -36,11 +44,17 @@ export default function AdminDashboard() {
     setLoading(true);
     try {
       const [uRes, bRes, rRes, cRes] = await Promise.all([
-        getUsers(), getBookings(), getReviews(), getCategories()
+        getUsers('', 1, 10), getBookings(1, 10), getReviews(1, 10), getCategories()
       ]);
       setUsers(uRes.data || []);
+      setUsersHasMore((uRes.data?.length || 0) === 10);
+      
       setBookings(bRes.data || []);
+      setBookingsHasMore((bRes.data?.length || 0) === 10);
+      
       setReviews(rRes.data || []);
+      setReviewsHasMore((rRes.data?.length || 0) === 10);
+      
       setCategories(cRes.data || []);
     } catch (error) {
       toast('Failed to load admin data', 'error');
@@ -50,6 +64,36 @@ export default function AdminDashboard() {
   };
 
   useEffect(() => { fetchAllData(); }, []);
+
+  const loadMoreUsers = async () => {
+    try {
+      const nextPage = usersPage + 1;
+      const res = await getUsers('', nextPage, 10);
+      setUsers([...users, ...(res.data || [])]);
+      setUsersPage(nextPage);
+      setUsersHasMore((res.data?.length || 0) === 10);
+    } catch { toast('Failed to load more users', 'error'); }
+  };
+
+  const loadMoreBookings = async () => {
+    try {
+      const nextPage = bookingsPage + 1;
+      const res = await getBookings(nextPage, 10);
+      setBookings([...bookings, ...(res.data || [])]);
+      setBookingsPage(nextPage);
+      setBookingsHasMore((res.data?.length || 0) === 10);
+    } catch { toast('Failed to load more bookings', 'error'); }
+  };
+
+  const loadMoreReviews = async () => {
+    try {
+      const nextPage = reviewsPage + 1;
+      const res = await getReviews(nextPage, 10);
+      setReviews([...reviews, ...(res.data || [])]);
+      setReviewsPage(nextPage);
+      setReviewsHasMore((res.data?.length || 0) === 10);
+    } catch { toast('Failed to load more reviews', 'error'); }
+  };
 
   const handleDelete = async () => {
     const { id, type } = modal;
@@ -136,14 +180,17 @@ export default function AdminDashboard() {
                           <td><StatusBadge status={u.role} /></td>
                           <td>{formatDate(u.createdAt)}</td>
                           <td>
-                            {u._id !== user._id && (
-                              <button className="btn-danger" onClick={() => setModal({ open: true, id: u._id, type: 'user', action: 'Delete' })}>Delete</button>
-                            )}
+                            <button className="btn-danger" onClick={() => setModal({ open: true, id: u._id, type: 'user', action: 'Delete' })}>Delete</button>
                           </td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
+                )}
+                {usersHasMore && (
+                  <div style={{ textAlign: 'center', marginTop: '20px' }}>
+                    <button className="btn-outline" onClick={loadMoreUsers}>Load More Users</button>
+                  </div>
                 )}
               </div>
             )}
@@ -177,6 +224,11 @@ export default function AdminDashboard() {
                     </tbody>
                   </table>
                 )}
+                {bookingsHasMore && (
+                  <div style={{ textAlign: 'center', marginTop: '20px' }}>
+                    <button className="btn-outline" onClick={loadMoreBookings}>Load More Bookings</button>
+                  </div>
+                )}
               </div>
             )}
 
@@ -208,6 +260,11 @@ export default function AdminDashboard() {
                       ))}
                     </tbody>
                   </table>
+                )}
+                {reviewsHasMore && (
+                  <div style={{ textAlign: 'center', marginTop: '20px' }}>
+                    <button className="btn-outline" onClick={loadMoreReviews}>Load More Reviews</button>
+                  </div>
                 )}
               </div>
             )}

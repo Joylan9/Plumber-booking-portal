@@ -1,8 +1,9 @@
 import api from './api';
 
-// Users
-export const getUsers = async (role = '') => {
-  const url = role ? `/api/admin/users?role=${role}` : '/api/admin/users';
+export const getUsers = async (role = '', page = 1, limit = 10) => {
+  const url = role 
+    ? `/api/admin/users?role=${role}&page=${page}&limit=${limit}` 
+    : `/api/admin/users?page=${page}&limit=${limit}`;
   const res = await api.get(url);
   return res.data;
 };
@@ -12,9 +13,8 @@ export const deleteUser = async (id) => {
   return res.data;
 };
 
-// Bookings
-export const getBookings = async () => {
-  const res = await api.get('/api/admin/bookings');
+export const getBookings = async (page = 1, limit = 10) => {
+  const res = await api.get(`/api/admin/bookings?page=${page}&limit=${limit}`);
   return res.data;
 };
 
@@ -23,9 +23,8 @@ export const deleteBooking = async (id) => {
   return res.data;
 };
 
-// Reviews
-export const getReviews = async () => {
-  const res = await api.get('/api/admin/reviews');
+export const getReviews = async (page = 1, limit = 10) => {
+  const res = await api.get(`/api/admin/reviews?page=${page}&limit=${limit}`);
   return res.data;
 };
 

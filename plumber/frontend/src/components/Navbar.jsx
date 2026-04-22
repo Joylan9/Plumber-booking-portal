@@ -68,9 +68,11 @@ const Navbar = () => {
                   <Link to="/admin" className="nav-link">Admin Panel</Link>
                 </li>
               )}
-              <li className="nav-item">
-                <Link to="/dashboard" className="nav-link">Dashboard</Link>
-              </li>
+              {user.role !== 'admin' && (
+                <li className="nav-item">
+                  <Link to="/dashboard" className="nav-link">Dashboard</Link>
+                </li>
+              )}
               <li className="nav-item">
                 <Link to="/profile" className="nav-link user-pill glass-panel" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 12px' }}>
                   {user.profileImage ? (

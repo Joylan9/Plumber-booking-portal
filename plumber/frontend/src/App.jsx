@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -27,6 +27,7 @@ const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
 
 const DashboardResolver = () => {
   const { user } = useAuth();
+  if (user?.role === 'admin') return <Navigate to="/admin" replace />;
   if (user?.role === 'plumber') return <PlumberDashboard />;
   return <CustomerDashboard />;
 };

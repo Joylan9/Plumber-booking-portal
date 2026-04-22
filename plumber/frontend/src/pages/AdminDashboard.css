@@ -90,7 +90,7 @@
 }
 
 .btn-danger {
-  background-color: var(--red);
+  background-color: var(--danger);
   color: white;
   border: none;
   padding: 6px 12px;

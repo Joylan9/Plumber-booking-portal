@@ -1,6 +1,8 @@
 const Booking = require('../models/Booking');
 const User = require('../models/User');
 const { createHttpError } = require('../utils/httpError');
+const sendEmail = require('../utils/sendEmail');
+const { generateEmailTemplate } = require('../utils/emailTemplates');
 
 const BOOKING_POPULATE = [
   { path: 'customerId', select: 'name email phone area' },
@@ -207,6 +209,42 @@ const updateBookingStatus = async (req, res, next) => {
     await booking.save();
 
     const populatedBooking = await populateBooking(Booking.findById(booking._id));
+
+    // Send email notification to customer
+    if (['accepted', 'completed', 'cancelled'].includes(nextStatus)) {
+      const customer = populatedBooking.customerId;
+      const plumber = populatedBooking.plumberId;
+      
+      if (customer && customer.email) {
+        let subject = '';
+        let statusMessage = '';
+        
+        if (nextStatus === 'accepted') {
+          subject = 'Your Booking has been Accepted';
+          statusMessage = 'has accepted your booking and will arrive at the scheduled time.';
+        } else if (nextStatus === 'completed') {
+          subject = 'Your Service is Completed';
+          statusMessage = 'has marked your service as completed. Thank you for using our platform!';
+        } else if (nextStatus === 'cancelled') {
+          subject = 'Your Booking has been Declined';
+          statusMessage = 'is unfortunately unable to fulfill your booking request at this time.';
+        }
+
+        const html = generateEmailTemplate({
+          title: subject,
+          message: `Hello ${customer.name}, your professional ${plumber.name} ${statusMessage}`,
+          status: nextStatus,
+          details: {
+            'Service Type': populatedBooking.serviceType,
+            'Scheduled Date': new Date(populatedBooking.date).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }),
+            'Time Slot': populatedBooking.time,
+            'Job Status': nextStatus.toUpperCase(),
+          },
+        });
+
+        sendEmail({ email: customer.email, subject, html }).catch(err => console.error("Email send failed:", err));
+      }
+    }
 
     return res.status(200).json({
       success: true,

@@ -31,7 +31,7 @@ export default function PlumberReviews() {
   useEffect(() => {
     if (user?._id) {
       getPlumberReviews(user._id)
-        .then(res => setReviews(res.data.reviews || []))
+        .then(res => setReviews(res.data || []))
         .catch(err => console.error("Failed to load reviews", err))
         .finally(() => setLoading(false));
     }

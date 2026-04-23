@@ -2,6 +2,8 @@ const Booking = require('../models/Booking');
 const Review = require('../models/Review');
 const User = require('../models/User');
 const { createHttpError } = require('../utils/httpError');
+const sendEmail = require('../utils/sendEmail');
+const { generateEmailTemplate } = require('../utils/emailTemplates');
 
 const REVIEW_POPULATE = [
   { path: 'customerId', select: 'name' },
@@ -79,6 +81,25 @@ const createReview = async (req, res, next) => {
     await updatePlumberReviewStats(booking.plumberId);
 
     const populatedReview = await populateReview(Review.findById(review._id));
+
+    // Send email notification to plumber
+    const plumber = await User.findById(booking.plumberId).select('email name');
+    if (plumber && plumber.email) {
+      const subject = 'New Review Received ⭐';
+      const customerName = populatedReview.customerId?.name || 'A customer';
+      const html = generateEmailTemplate({
+        title: subject,
+        message: `Congratulations ${plumber.name}! You have received a new performance rating from ${customerName}.`,
+        status: `${numericRating} STARS`,
+        details: {
+          'Customer': customerName,
+          'Rating': '⭐'.repeat(numericRating),
+          'Feedback': trimmedComment,
+          'Date Received': new Date().toLocaleDateString(),
+        },
+      });
+      sendEmail({ email: plumber.email, subject, html }).catch(err => console.error("Email send failed:", err));
+    }
 
     return res.status(201).json({
       success: true,

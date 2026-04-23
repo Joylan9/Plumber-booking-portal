@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { getMyBookings, updateBookingStatus } from '../services/bookingService';
@@ -12,8 +12,8 @@ import EmptyState from '../components/EmptyState';
 import { toast } from '../components/Toast';
 import './PlumberDashboard.css';
 
-const stagger = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.08 } } };
-const fadeUp = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] } } };
+const stagger = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.05 } } };
+const fadeUp = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.2, ease: [0.16, 1, 0.3, 1] } } };
 
 function getGreeting() {
   const h = new Date().getHours();
@@ -56,7 +56,7 @@ export default function PlumberDashboard() {
   const [selectedJob, setSelectedJob] = useState(null); // Controls Job Detail Drawer
   const [modal, setModal] = useState({ open: false, id: null, action: '' });
 
-  const fetchData = async (isBackground = false) => {
+  const fetchData = useCallback(async (isBackground = false) => {
     if (!isBackground) setLoading(true);
     setError(null);
     try {
@@ -67,15 +67,15 @@ export default function PlumberDashboard() {
     } finally {
       if (!isBackground) setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchData();
     const interval = setInterval(() => fetchData(true), 30000); // Polling every 30s
     return () => clearInterval(interval);
-  }, []);
+  }, [fetchData]);
 
-  const handleAction = async () => {
+  const handleAction = useCallback(async () => {
     const { id, action } = modal;
     setModal({ open: false, id: null, action: '' });
     try {
@@ -88,26 +88,26 @@ export default function PlumberDashboard() {
     } catch (err) {
       toast(err.message || 'Action failed', 'error');
     }
-  };
+  }, [modal, selectedJob]);
 
   // Derived Stats
-  const pending = bookings.filter(b => b.status === 'pending');
-  const active = bookings.filter(b => b.status === 'accepted');
-  const completed = bookings.filter(b => b.status === 'completed');
+  const pending = useMemo(() => bookings.filter(b => b.status === 'pending'), [bookings]);
+  const active = useMemo(() => bookings.filter(b => b.status === 'accepted'), [bookings]);
+  const completed = useMemo(() => bookings.filter(b => b.status === 'completed'), [bookings]);
   
-  const todayJobs = bookings.filter(b => {
+  const todayJobs = useMemo(() => bookings.filter(b => {
     const d = new Date(b.date);
     const now = new Date();
     return d.getDate() === now.getDate() && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-  });
+  }), [bookings]);
 
   // Filtered List
-  const filteredBookings = bookings.filter(b => {
+  const filteredBookings = useMemo(() => bookings.filter(b => {
     if (activeTab === 'All') return true;
     if (activeTab === 'In Progress') return b.status === 'accepted';
-    if (activeTab === 'Confirmed') return b.status === 'accepted'; // accepted is treated as confirmed/in-progress
+    if (activeTab === 'Confirmed') return b.status === 'accepted';
     return b.status.toLowerCase() === activeTab.toLowerCase();
-  });
+  }), [bookings, activeTab]);
 
   const tabs = ['All', 'Pending', 'In Progress', 'Completed', 'Cancelled'];
 
@@ -195,7 +195,6 @@ export default function PlumberDashboard() {
                         key={b._id} 
                         className="pl-job-card" 
                         variants={fadeUp} 
-                        layout 
                         exit={{ opacity: 0, scale: 0.95 }}
                         onClick={() => setSelectedJob(b)}
                       >

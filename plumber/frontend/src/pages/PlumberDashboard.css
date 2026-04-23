@@ -376,7 +376,13 @@
 .pl-drawer-body {
   flex: 1;
   overflow-y: auto;
+  max-height: 100vh;
   padding: 24px;
+  scrollbar-width: none;
+}
+
+.pl-drawer-body::-webkit-scrollbar {
+  display: none;
 }
 
 .pl-drawer-status-bar {

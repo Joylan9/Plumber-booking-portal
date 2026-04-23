@@ -23,6 +23,8 @@ const BookingDetail = lazy(() => import('./pages/BookingDetail'));
 const CustomerDashboard = lazy(() => import('./pages/CustomerDashboard'));
 const PlumberDashboard = lazy(() => import('./pages/PlumberDashboard'));
 const Profile = lazy(() => import('./pages/Profile'));
+const PlumberProfileSettings = lazy(() => import('./pages/PlumberProfileSettings'));
+const PlumberReviews = lazy(() => import('./pages/PlumberReviews'));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
 
 const DashboardResolver = () => {
@@ -30,6 +32,12 @@ const DashboardResolver = () => {
   if (user?.role === 'admin') return <Navigate to="/admin" replace />;
   if (user?.role === 'plumber') return <PlumberDashboard />;
   return <CustomerDashboard />;
+};
+
+const ProfileResolver = () => {
+  const { user } = useAuth();
+  if (user?.role === 'plumber') return <PlumberProfileSettings />;
+  return <Profile />;
 };
 
 const PageLoader = () => (
@@ -62,12 +70,17 @@ const AnimatedRoutes = () => {
           } />
           <Route path="/profile" element={
             <ProtectedRoute roles={['customer', 'plumber']}>
-              <PageWrapper><Profile /></PageWrapper>
+              <PageWrapper><ProfileResolver /></PageWrapper>
             </ProtectedRoute>
           } />
           <Route path="/dashboard" element={
             <ProtectedRoute roles={['customer', 'plumber']}>
               <PageWrapper><DashboardResolver /></PageWrapper>
+            </ProtectedRoute>
+          } />
+          <Route path="/plumber-reviews" element={
+            <ProtectedRoute roles={['plumber']}>
+              <PageWrapper><PlumberReviews /></PageWrapper>
             </ProtectedRoute>
           } />
           <Route path="/booking" element={

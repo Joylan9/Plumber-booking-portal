@@ -164,48 +164,17 @@ The frontend delivers a premium experience powered by **React 19**, **Framer Mot
 
 ## 🏗️ Architecture
 
-```mermaid
-graph TB
-    Client["🖥️ React 19 Frontend<br/>Vite 8 + Framer Motion + GSAP"]
-    API["⚡ Express 5 API<br/>Node.js REST Server"]
-    Auth["🔐 Auth Middleware<br/>JWT + Bcrypt + RBAC"]
-    DB["🗄️ MongoDB<br/>Mongoose 9 ODM"]
-    Email["📧 Email Service<br/>Nodemailer SMTP"]
-    Upload["📁 File Upload<br/>Multer + Static Serve"]
+### System Architecture
 
-    Client -->|"Axios HTTP"| API
-    API --> Auth
-    API --> DB
-    API --> Email
-    API --> Upload
-
-    style Client fill:#61DAFB,color:#000
-    style API fill:#339933,color:#fff
-    style Auth fill:#F0A500,color:#000
-    style DB fill:#47A248,color:#fff
-    style Email fill:#22B573,color:#fff
-    style Upload fill:#FF6600,color:#fff
-```
+<p align="center">
+  <img src="https://mermaid.ink/img/Z3JhcGggVEIKICAgIENsaWVudFsiUmVhY3QgMTkgRnJvbnRlbmQgLSBWaXRlIDggKyBGcmFtZXIgTW90aW9uICsgR1NBUCJdCiAgICBBUElbIkV4cHJlc3MgNSBBUEkgLSBOb2RlLmpzIFJFU1QgU2VydmVyIl0KICAgIEF1dGhbIkF1dGggTWlkZGxld2FyZSAtIEpXVCArIEJjcnlwdCArIFJCQUMiXQogICAgREJbIk1vbmdvREIgLSBNb25nb29zZSA5IE9ETSJdCiAgICBFbWFpbFsiRW1haWwgU2VydmljZSAtIE5vZGVtYWlsZXIgU01UUCJdCiAgICBVcGxvYWRbIkZpbGUgVXBsb2FkIC0gTXVsdGVyICsgU3RhdGljIFNlcnZlIl0KICAgIENsaWVudCAtLT58QXhpb3MgSFRUUHwgQVBJCiAgICBBUEkgLS0+IEF1dGgKICAgIEFQSSAtLT4gREIKICAgIEFQSSAtLT4gRW1haWwKICAgIEFQSSAtLT4gVXBsb2FkCiAgICBzdHlsZSBDbGllbnQgZmlsbDojNjFEQUZCLGNvbG9yOiMwMDAKICAgIHN0eWxlIEFQSSBmaWxsOiMzMzk5MzMsY29sb3I6I2ZmZgogICAgc3R5bGUgQXV0aCBmaWxsOiNGMEE1MDAsY29sb3I6IzAwMAogICAgc3R5bGUgREIgZmlsbDojNDdBMjQ4LGNvbG9yOiNmZmYKICAgIHN0eWxlIEVtYWlsIGZpbGw6IzIyQjU3Myxjb2xvcjojZmZmCiAgICBzdHlsZSBVcGxvYWQgZmlsbDojRkY2NjAwLGNvbG9yOiNmZmY=" alt="Architecture Diagram" width="80%"/>
+</p>
 
 ### Request Flow
 
-```mermaid
-sequenceDiagram
-    actor Customer
-    participant React as React Frontend
-    participant API as Express API
-    participant Auth as Auth Middleware
-    participant DB as MongoDB
-
-    Customer->>React: Clicks "Book Now"
-    React->>API: POST /api/bookings
-    API->>Auth: Verify JWT Token
-    Auth-->>API: Token Valid ✓
-    API->>DB: Create Booking Document
-    DB-->>API: Booking Saved ✓
-    API-->>React: 201 Created + Booking Data
-    React-->>Customer: Redirect to Confirmation Page
-```
+<p align="center">
+  <img src="https://mermaid.ink/img/c2VxdWVuY2VEaWFncmFtCiAgICBhY3RvciBDdXN0b21lcgogICAgcGFydGljaXBhbnQgUmVhY3QgYXMgUmVhY3QgRnJvbnRlbmQKICAgIHBhcnRpY2lwYW50IEFQSSBhcyBFeHByZXNzIEFQSQogICAgcGFydGljaXBhbnQgQXV0aCBhcyBBdXRoIE1pZGRsZXdhcmUKICAgIHBhcnRpY2lwYW50IERCIGFzIE1vbmdvREIKICAgIEN1c3RvbWVyLT4+UmVhY3Q6IENsaWNrcyBCb29rIE5vdwogICAgUmVhY3QtPj5BUEk6IFBPU1QgL2FwaS9ib29raW5ncwogICAgQVBJLT4+QXV0aDogVmVyaWZ5IEpXVCBUb2tlbgogICAgQXV0aC0tPj5BUEk6IFRva2VuIFZhbGlkCiAgICBBUEktPj5EQjogQ3JlYXRlIEJvb2tpbmcgRG9jdW1lbnQKICAgIERCLS0+PkFQSTogQm9va2luZyBTYXZlZAogICAgQVBJLS0+PlJlYWN0OiAyMDEgQ3JlYXRlZCArIEJvb2tpbmcgRGF0YQogICAgUmVhY3QtLT4+Q3VzdG9tZXI6IFJlZGlyZWN0IHRvIENvbmZpcm1hdGlvbiBQYWdl" alt="Request Flow Diagram" width="80%"/>
+</p>
 
 <img src="https://raw.githubusercontent.com/trinib/trinib/82213791fa9ff58d3ca768ddd6de2489ec23ffca/images/footer.svg" width="100%">
 

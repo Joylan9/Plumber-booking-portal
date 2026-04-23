@@ -1,0 +1,1 @@
+import{t as e}from"./api-UHjbVcnY.js";var t=async t=>(await e.put(`/api/users/profile`,t)).data,n=async t=>(await e.post(`/api/users/upload-avatar`,t,{headers:{"Content-Type":`multipart/form-data`}})).data;export{n,t};

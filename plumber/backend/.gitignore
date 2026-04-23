@@ -8,15 +8,15 @@ lerna-debug.log*
 .pnpm-debug.log*
 
 # Dependency directories
-node_modules/
+# node_modules/
 jspm_packages/
 
 # Setup / Environment
-.env
+# .env
 .env.test
 .env.production
 .env.local
-uploads/
+# uploads/
 
 # Optional REPL history
 .node_repl_history

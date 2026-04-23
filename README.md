@@ -329,3 +329,272 @@ sequenceDiagram
 │
 └── 📂 Database/                    # Local MongoDB data directory
 ```
+
+<img src="https://raw.githubusercontent.com/trinib/trinib/82213791fa9ff58d3ca768ddd6de2489ec23ffca/images/footer.svg" width="100%">
+
+## ⚡ Quick Start
+
+> Get the app running locally in under 5 minutes
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/Joylan9/Plumber-booking-portal.git
+cd Plumber-booking-portal/plumber
+
+# 2. Install backend dependencies
+cd backend
+npm install
+
+# 3. Configure backend environment
+cp .env.example .env
+# Edit .env to add your MongoDB URI and JWT secret
+
+# 4. Start backend development server
+npm run dev
+# Server runs on http://localhost:5000
+```
+
+```bash
+# 5. Open a new terminal window
+cd ../frontend
+
+# 6. Install frontend dependencies
+npm install
+
+# 7. Start frontend development server
+npm run dev
+# App runs on http://localhost:5173
+```
+
+<img src="https://raw.githubusercontent.com/trinib/trinib/82213791fa9ff58d3ca768ddd6de2489ec23ffca/images/footer.svg" width="100%">
+
+## 🔧 Installation
+
+### Prerequisites
+
+| Tool | Version | Download |
+|------|---------|----------|
+| Node.js | ≥ 20.x | [nodejs.org](https://nodejs.org) |
+| npm | ≥ 10.x | included with Node |
+| MongoDB | ≥ 7.x | [mongodb.com](https://www.mongodb.com/try/download/community) |
+
+### Database Seeding
+
+To quickly populate your local MongoDB with default service categories and an admin user, run these scripts from the `backend` directory:
+
+```bash
+# Seed default plumbing categories (General, Heating, Drainage, etc.)
+npm run seed:categories
+
+# To create a default Admin user, run:
+node src/scripts/createAdmin.js
+```
+
+<img src="https://raw.githubusercontent.com/trinib/trinib/82213791fa9ff58d3ca768ddd6de2489ec23ffca/images/footer.svg" width="100%">
+
+## 🌍 Environment Variables
+
+> ⚠️ Never commit your `.env` file. Use `.env.example` as a reference.
+
+Create a `.env` file in the `backend/` directory with the following variables:
+
+| Variable | Required | Example | Description |
+|----------|----------|---------|-------------|
+| `PORT` | ❌ No | `5000` | Backend server port |
+| `MONGODB_URI` | ✅ Yes | `mongodb://localhost:27017/flowmatch` | Connection string for MongoDB |
+| `JWT_SECRET` | ✅ Yes | `your_super_secret_jwt_key` | Secret used to sign JWT tokens |
+| `FRONTEND_URL` | ✅ Yes | `http://localhost:5173` | Allowed CORS origin |
+| `SMTP_HOST` | ❌ No | `smtp.gmail.com` | Email provider SMTP host |
+| `SMTP_PORT` | ❌ No | `587` | Email provider SMTP port |
+| `SMTP_EMAIL` | ❌ No | `youremail@gmail.com` | Sender email address |
+| `SMTP_PASSWORD` | ❌ No | `your_app_password` | Email app password |
+| `FROM_EMAIL` | ❌ No | `noreply@flowmatch.com` | Sender alias email |
+| `FROM_NAME` | ❌ No | `FlowMatch` | Sender alias name |
+| `ENABLE_DEV_EMAIL_LOGS`| ❌ No | `true` | Log emails to console instead of sending |
+
+*(Note: The frontend connects to `http://localhost:5000` via proxy settings in `vite.config.js` by default).*
+
+<img src="https://raw.githubusercontent.com/trinib/trinib/82213791fa9ff58d3ca768ddd6de2489ec23ffca/images/footer.svg" width="100%">
+
+## 📡 API Reference
+
+Below are the core REST API endpoints. All protected routes require a `Bearer <JWT_TOKEN>` in the Authorization header.
+
+### Authentication (`/api/auth`)
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| `POST` | `/register` | ❌ | Register a new user (customer/plumber) |
+| `POST` | `/login` | ❌ | Authenticate user & get token |
+| `POST` | `/forgot-password`| ❌ | Request password reset email |
+| `POST` | `/reset-password` | ❌ | Reset password via token |
+
+### Users & Profiles (`/api/users`)
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| `PUT`  | `/profile` | ✅ JWT | Update user profile details |
+| `POST` | `/upload-avatar` | ✅ JWT | Upload user profile picture |
+
+### Plumbers (`/api/plumbers`)
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| `GET`  | `/` | ❌ | List all plumbers (supports filters) |
+| `GET`  | `/:id` | ❌ | Get single plumber profile & reviews |
+
+### Bookings (`/api/bookings`)
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| `POST` | `/` | ✅ JWT (Customer) | Create a new booking request |
+| `GET`  | `/my-bookings` | ✅ JWT | Get bookings for current user |
+| `GET`  | `/:id` | ✅ JWT | Get specific booking details |
+| `PUT`  | `/:id/status` | ✅ JWT (Plumber/Admin) | Accept, decline, or complete booking |
+
+### Categories (`/api/categories`)
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| `GET`  | `/` | ❌ | List all service categories |
+
+### Admin (`/api/admin`)
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| `GET`  | `/users` | ✅ JWT (Admin) | List all registered users |
+| `GET`  | `/bookings` | ✅ JWT (Admin) | List all platform bookings |
+| `GET`  | `/reviews` | ✅ JWT (Admin) | List all user reviews |
+| `DELETE`| `/users/:id` | ✅ JWT (Admin) | Delete a user |
+
+<details>
+<summary>📥 POST /api/bookings — Example Request & Response</summary>
+
+**Request Body:**
+```json
+{
+  "plumberId": "60d5ecb8b392d7001532f123",
+  "category": "Emergency Plumbing",
+  "issueDescription": "Pipe burst in the kitchen, flooding the floor.",
+  "address": "123 Main St, Springfield",
+  "contactPhone": "555-0198",
+  "estimatedHours": 2
+}
+```
+
+**Response (201 Created):**
+```json
+{
+  "_id": "60d5eccfb392d7001532f124",
+  "customer": "60d5ec12b392d7001532f120",
+  "plumber": "60d5ecb8b392d7001532f123",
+  "category": "Emergency Plumbing",
+  "status": "pending",
+  "totalCost": 150,
+  "createdAt": "2024-05-20T10:30:00Z"
+}
+```
+</details>
+
+<img src="https://raw.githubusercontent.com/trinib/trinib/82213791fa9ff58d3ca768ddd6de2489ec23ffca/images/footer.svg" width="100%">
+
+## 📸 Screenshots
+
+<div align="center">
+  <img src="https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=800&q=80" width="45%" alt="Plumber Directory" style="border-radius:8px; margin:8px; box-shadow: 0 10px 30px rgba(0,0,0,0.15);"/>
+  <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&q=80" width="45%" alt="Admin Dashboard" style="border-radius:8px; margin:8px; box-shadow: 0 10px 30px rgba(0,0,0,0.15);"/>
+  <br/><em>🖼️ App Previews — Plumber Directory & Data Dashboards</em>
+</div>
+
+<img src="https://raw.githubusercontent.com/trinib/trinib/82213791fa9ff58d3ca768ddd6de2489ec23ffca/images/footer.svg" width="100%">
+
+## 🗺️ Roadmap
+
+- [x] ✅ JWT Authentication & Role Management
+- [x] ✅ Plumber Directory & Public Profiles
+- [x] ✅ Booking Workflow (Pending → Accepted → Completed)
+- [x] ✅ Admin Dashboard (Full CRUD)
+- [x] ✅ Review & Rating System
+- [ ] 🔄 Real-time chat between Customer & Plumber (Socket.io)
+- [ ] 🔄 Payment Gateway Integration (Stripe)
+- [ ] 🔄 Push Notifications for booking updates
+- [ ] 💡 Geolocation & Map-based Plumber Search
+- [ ] 💡 AI-powered issue diagnosis chatbot
+
+<img src="https://raw.githubusercontent.com/trinib/trinib/82213791fa9ff58d3ca768ddd6de2489ec23ffca/images/footer.svg" width="100%">
+
+## 🤝 Contributing
+
+Contributions are welcome and appreciated! Here's how you can help improve FlowMatch:
+
+```bash
+# 1. Fork the repository
+# 2. Create your feature branch
+git checkout -b feature/AmazingFeature
+
+# 3. Commit your changes
+git commit -m 'feat: Add AmazingFeature'
+
+# 4. Push to the branch
+git push origin feature/AmazingFeature
+
+# 5. Open a Pull Request
+```
+
+### Commit Convention
+
+| Prefix | Usage |
+|--------|-------|
+| `feat:` | New feature |
+| `fix:` | Bug fix |
+| `docs:` | Documentation changes |
+| `style:` | Code formatting / CSS updates |
+| `refactor:` | Code restructure (no new features/fixes) |
+| `test:` | Adding or updating tests |
+| `chore:` | Build tasks, package manager configs |
+
+<img src="https://raw.githubusercontent.com/trinib/trinib/82213791fa9ff58d3ca768ddd6de2489ec23ffca/images/footer.svg" width="100%">
+
+## 👤 Author
+
+<p align="center">
+  <a href="https://github.com/Joylan9">
+    <img src="https://github.com/Joylan9.png" width="120px" style="border-radius:50%; border: 4px solid #F0A500; box-shadow: 0 10px 25px rgba(240, 165, 0, 0.4);"/>
+  </a>
+  <br/>
+  <br/>
+  <strong>Joylan Dsouza</strong><br/>
+  <em>Full-Stack Developer · AI/GenAI Enthusiast</em>
+</p>
+
+<p align="center">
+  <a href="https://linkedin.com/in/joylan-dsouza">
+    <img src="https://img.shields.io/badge/LinkedIn-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white"/>
+  </a>
+  <a href="https://github.com/Joylan9">
+    <img src="https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white"/>
+  </a>
+  <a href="mailto:joylan928@gmail.com">
+    <img src="https://img.shields.io/badge/Email-EA4335?style=for-the-badge&logo=gmail&logoColor=white"/>
+  </a>
+</p>
+
+<img src="https://raw.githubusercontent.com/trinib/trinib/82213791fa9ff58d3ca768ddd6de2489ec23ffca/images/footer.svg" width="100%">
+
+<p align="center">
+  <strong>⭐ If this project helped or inspired you, please consider giving it a star! ⭐</strong>
+</p>
+
+<p align="center">
+  <a href="https://github.com/Joylan9/Plumber-booking-portal/stargazers">
+    <img src="https://img.shields.io/github/stars/Joylan9/Plumber-booking-portal?style=social&size=large"/>
+  </a>
+</p>
+
+![Footer](https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=12,20,26&height=120&section=footer)
+
+## 📄 License
+
+Distributed under the MIT License. See `LICENSE` for more information.
+
+---
+
+<p align="center">
+  Made with ❤️ by <a href="https://github.com/Joylan9">Joylan Dsouza</a>
+  &nbsp;•&nbsp;
+  <a href="#top">Back to top ↑</a>
+</p>

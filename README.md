@@ -534,12 +534,6 @@ Below are the core REST API endpoints. All protected routes require a `Bearer <J
   <br/><em>🖼️ FlowMatch — Homepage Hero · Professional Plumbing Services, When You Need Them Most</em>
 </div>
 
-<div align="center">
-  <img src="https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=800&q=80" width="45%" alt="Plumber Directory" style="border-radius:8px; margin:8px; box-shadow: 0 10px 30px rgba(0,0,0,0.15);"/>
-  <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&q=80" width="45%" alt="Admin Dashboard" style="border-radius:8px; margin:8px; box-shadow: 0 10px 30px rgba(0,0,0,0.15);"/>
-  <br/><em>🖼️ App Previews — Plumber Directory & Data Dashboards</em>
-</div>
-
 <img src="https://raw.githubusercontent.com/trinib/trinib/82213791fa9ff58d3ca768ddd6de2489ec23ffca/images/footer.svg" width="100%">
 
 ## 🗺️ Roadmap

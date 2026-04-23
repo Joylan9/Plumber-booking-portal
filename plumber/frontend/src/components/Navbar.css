@@ -5,7 +5,10 @@
     width: 100%;
     background-color: var(--steel-blue);
     padding: 16px 24px;
-    box-shadow: 0 2px 8px rgba(15, 52, 96, 0.15);
+    box-shadow: 0 2px 12px rgba(10, 37, 64, 0.15);
+    transition: background-color 0.3s var(--ease-premium),
+                box-shadow 0.3s var(--ease-premium),
+                padding 0.3s var(--ease-premium);
 }
 
 .navbar-container {
@@ -25,6 +28,12 @@
     font-weight: 700;
     color: #fff;
     z-index: 1001; /* Stay above mobile menu */
+    transition: var(--transition-fast);
+}
+
+.navbar-logo:hover {
+    color: #fff;
+    opacity: 0.92;
 }
 
 .logo-icon {
@@ -47,6 +56,12 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    transition: var(--transition-fast);
+    border-radius: var(--radius-md);
+}
+
+.mobile-toggle:hover {
+    background: rgba(255, 255, 255, 0.1);
 }
 
 @media (min-width: 768px) {
@@ -68,8 +83,8 @@
     gap: 20px;
     transform: translateY(-150%);
     opacity: 0;
-    transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    transition: transform 0.35s var(--ease-premium), opacity 0.35s var(--ease-premium);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
     list-style: none;
 }
 
@@ -97,13 +112,33 @@
     display: block;
     font-weight: 500;
     color: #fff;
-    transition: var(--transition-smooth);
+    transition: var(--transition-fast);
     padding: 8px 0;
+    position: relative;
 }
 
 @media (min-width: 768px) {
     .nav-link {
-        padding: 0;
+        padding: 4px 0;
+    }
+}
+
+/* Hover underline animation */
+@media (min-width: 768px) {
+    .nav-link::after {
+        content: '';
+        position: absolute;
+        bottom: -2px;
+        left: 0;
+        width: 0;
+        height: 2px;
+        background: var(--fm-amber);
+        border-radius: 1px;
+        transition: width 0.3s var(--ease-premium);
+    }
+
+    .nav-link:hover::after {
+        width: 100%;
     }
 }
 
@@ -118,8 +153,15 @@
     text-transform: uppercase;
     color: var(--navy);
     background-color: var(--mist);
-    border-radius: 20px;
+    border-radius: var(--radius-full);
     display: inline-block;
+    transition: var(--transition-fast);
+}
+
+.user-pill:hover {
+    background-color: #fff;
+    color: var(--navy);
+    box-shadow: var(--shadow-sm);
 }
 
 .auth-buttons {
@@ -175,4 +217,3 @@
         width: auto;
     }
 }
-

@@ -31,11 +31,13 @@
     font-size: clamp(2rem, 5vw, 2.5rem);
     color: var(--navy);
     margin-bottom: 12px;
+    letter-spacing: -0.02em;
 }
 
 .booking-header p {
-    color: var(--steel-blue);
+    color: var(--fm-text-secondary);
     font-size: clamp(1rem, 2vw, 1.1rem);
+    line-height: 1.5;
 }
 
 .booking-error {
@@ -43,7 +45,7 @@
     color: #C0392B;
     border: 1px solid #E74C3C;
     padding: 16px;
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     margin-bottom: 24px;
     text-align: center;
     font-weight: 500;
@@ -51,6 +53,7 @@
 
 .booking-form {
     padding: 24px;
+    border-radius: var(--radius-lg);
 }
 
 @media (min-width: 768px) {
@@ -102,6 +105,7 @@
     margin-top: 16px;
     font-size: 1.1rem;
     padding: 16px;
+    border-radius: var(--radius-lg);
 }
 
 /* Cost preview card */
@@ -109,11 +113,12 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 12px 16px;
+    padding: 14px 18px;
     margin-bottom: 20px;
     font-size: 0.9rem;
-    border: 1px solid var(--sky);
-    background: var(--mist);
+    border: 1px solid var(--fm-border);
+    background: var(--fm-surface-warm);
+    border-radius: var(--radius-md);
 }
 
 .cost-preview strong {

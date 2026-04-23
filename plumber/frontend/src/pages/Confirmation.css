@@ -39,7 +39,7 @@
     justify-content: center;
     border-radius: 50%;
     margin: 0 auto 16px auto;
-    box-shadow: 0 4px 14px rgba(39, 174, 96, 0.3);
+    box-shadow: 0 4px 20px var(--fm-green-glow), 0 0 0 6px rgba(26, 122, 74, 0.08);
 }
 
 @media (min-width: 768px) {
@@ -55,16 +55,19 @@
     font-size: clamp(1.8rem, 5vw, 2.2rem);
     color: var(--navy);
     margin-bottom: 12px;
+    letter-spacing: -0.02em;
 }
 
 .success-header p {
-    color: var(--steel-blue);
+    color: var(--fm-text-secondary);
     font-size: clamp(1rem, 2vw, 1.1rem);
+    line-height: 1.5;
 }
 
 .summary-card {
     padding: 20px;
     margin-bottom: 24px;
+    border-radius: var(--radius-lg);
 }
 
 @media (min-width: 768px) {
@@ -78,7 +81,7 @@
     font-size: clamp(1.2rem, 3vw, 1.4rem);
     margin-bottom: 20px;
     padding-bottom: 12px;
-    border-bottom: 1px solid var(--sky);
+    border-bottom: 1px solid var(--fm-border);
 }
 
 @media (min-width: 768px) {
@@ -115,7 +118,7 @@
 }
 
 .value {
-    color: var(--steel-blue);
+    color: var(--fm-text-secondary);
     text-align: left;
     word-break: break-word;
 }
@@ -127,21 +130,22 @@
 }
 
 .status-pill {
-    background-color: rgba(245, 166, 35, 0.15); /* Amber light */
+    background-color: var(--fm-amber-soft);
     color: var(--amber-cta);
     font-weight: 700;
     padding: 4px 12px;
-    border-radius: 20px;
+    border-radius: var(--radius-full);
     font-size: 0.85rem;
     display: inline-block;
 }
 
 .ref-id {
     font-family: monospace;
-    background: #E2E8F0;
+    background: var(--fm-border-subtle);
     padding: 4px 8px;
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     word-break: break-all;
+    font-size: 0.82rem;
 }
 
 .map-placeholder {
@@ -157,6 +161,7 @@
     position: relative;
     overflow: hidden;
     width: 100%;
+    border-radius: var(--radius-lg);
 }
 
 @media (min-width: 768px) {
@@ -167,14 +172,15 @@
 }
 
 .map-overlay {
-    background: rgba(255,255,255,0.9);
+    background: rgba(255,255,255,0.92);
     padding: 16px;
-    border-radius: 8px;
+    border-radius: var(--radius-lg);
     text-align: center;
     font-weight: 600;
     color: var(--navy);
     width: 90%;
     max-width: 300px;
+    box-shadow: var(--shadow-md);
 }
 
 @media (min-width: 768px) {

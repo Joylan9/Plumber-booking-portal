@@ -1,9 +1,9 @@
 .skeleton-line {
   height: 14px;
-  border-radius: 4px;
-  background: linear-gradient(90deg, var(--mist) 25%, #dde8f0 50%, var(--mist) 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(90deg, var(--mist) 25%, #dde8f0 37%, #eef4f9 50%, #dde8f0 63%, var(--mist) 75%);
+  background-size: 400% 100%;
+  animation: shimmer 1.8s ease infinite;
   margin-bottom: 10px;
 }
 
@@ -22,8 +22,8 @@
 
 .skeleton-stat-card {
   background: var(--card-white);
-  border: 1px solid var(--sky);
-  border-radius: 8px;
+  border: 1px solid var(--fm-border-subtle);
+  border-radius: var(--radius-lg);
   padding: 20px 16px;
 }
 
@@ -36,8 +36,8 @@
 
 .skeleton-card-item {
   background: var(--card-white);
-  border: 1px solid var(--sky);
-  border-radius: 8px;
+  border: 1px solid var(--fm-border-subtle);
+  border-radius: var(--radius-lg);
   padding: 20px;
 }
 
@@ -45,9 +45,9 @@
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  background: linear-gradient(90deg, var(--mist) 25%, #dde8f0 50%, var(--mist) 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
+  background: linear-gradient(90deg, var(--mist) 25%, #dde8f0 37%, #eef4f9 50%, #dde8f0 63%, var(--mist) 75%);
+  background-size: 400% 100%;
+  animation: shimmer 1.8s ease infinite;
   margin-bottom: 14px;
 }
 
@@ -60,7 +60,7 @@
 
 .skeleton-row {
   background: var(--card-white);
-  border: 1px solid var(--sky);
-  border-radius: 8px;
+  border: 1px solid var(--fm-border-subtle);
+  border-radius: var(--radius-lg);
   padding: 16px 20px;
 }

@@ -1,0 +1,104 @@
+/* ═══════════════════════════════════════════════════════════
+   FLOWMATCH DESIGN TOKENS
+   Safe, additive token layer — does NOT override existing vars.
+   Enhances the existing color/spacing system.
+   ═══════════════════════════════════════════════════════════ */
+
+:root {
+  /* ── Enhanced Color Tokens ── */
+  --fm-navy:          #0A2540;
+  --fm-navy-deep:     #061B30;
+  --fm-steel:         #1A5276;
+  --fm-blue:          #2E86C1;
+  --fm-blue-soft:     #3A9AD9;
+  --fm-sky:           #93C5E8;
+  --fm-sky-light:     #B8DBF2;
+  --fm-mist:          #E8F4FD;
+  --fm-surface:       #F5F7FA;
+  --fm-surface-warm:  #F8FAFB;
+
+  --fm-amber:         #F0A500;
+  --fm-amber-hover:   #E69900;
+  --fm-amber-glow:    rgba(240, 165, 0, 0.25);
+  --fm-amber-soft:    rgba(240, 165, 0, 0.10);
+
+  --fm-green:         #1A7A4A;
+  --fm-green-glow:    rgba(26, 122, 74, 0.20);
+  --fm-danger:        #C0392B;
+  --fm-danger-glow:   rgba(192, 57, 43, 0.20);
+
+  --fm-text:          #0F3460;
+  --fm-text-secondary:#4A6A8A;
+  --fm-text-muted:    #6B7280;
+  --fm-text-inverse:  #FFFFFF;
+
+  --fm-border:        rgba(147, 197, 232, 0.35);
+  --fm-border-strong: rgba(147, 197, 232, 0.6);
+  --fm-border-subtle: rgba(147, 197, 232, 0.15);
+
+  /* ── Spacing (4px base grid) ── */
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  20px;
+  --space-6:  24px;
+  --space-8:  32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+  --space-24: 96px;
+
+  /* ── Border Radius ── */
+  --radius-sm:  4px;
+  --radius-md:  8px;
+  --radius-lg:  12px;
+  --radius-xl:  16px;
+  --radius-2xl: 24px;
+  --radius-full: 9999px;
+
+  /* ── Shadows ── */
+  --shadow-xs:   0 1px 2px rgba(10, 37, 64, 0.04);
+  --shadow-sm:   0 2px 4px rgba(10, 37, 64, 0.06);
+  --shadow-md:   0 4px 12px rgba(10, 37, 64, 0.08);
+  --shadow-lg:   0 8px 24px rgba(10, 37, 64, 0.10);
+  --shadow-xl:   0 16px 48px rgba(10, 37, 64, 0.12);
+  --shadow-glow-amber: 0 4px 20px rgba(240, 165, 0, 0.25);
+  --shadow-glow-blue:  0 4px 20px rgba(46, 134, 193, 0.20);
+
+  /* ── Easing Curves ── */
+  --ease-premium: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-snappy:  cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-bounce:  cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-silk:    cubic-bezier(0.25, 0.46, 0.45, 0.94);
+
+  /* ── Motion Durations ── */
+  --duration-instant: 100ms;
+  --duration-fast:    200ms;
+  --duration-base:    300ms;
+  --duration-slow:    500ms;
+  --duration-slower:  700ms;
+
+  /* ── Transitions (composed) ── */
+  --transition-fast:    all 0.2s var(--ease-snappy);
+  --transition-smooth:  all 0.3s var(--ease-premium);
+  --transition-premium: all 0.4s var(--ease-premium);
+}
+
+/* ── Reduced Motion ── */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-instant: 0ms;
+    --duration-fast:    0ms;
+    --duration-base:    0ms;
+    --duration-slow:    0ms;
+    --duration-slower:  0ms;
+  }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

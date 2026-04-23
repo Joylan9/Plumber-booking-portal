@@ -21,9 +21,12 @@
   font-size: 0.85rem;
   border-color: var(--danger);
   color: var(--danger);
+  border-radius: var(--radius-md);
+  transition: var(--transition-fast);
 }
 
 .error-state-btn:hover {
   background: var(--danger);
   color: #fff;
+  box-shadow: 0 4px 12px var(--fm-danger-glow);
 }

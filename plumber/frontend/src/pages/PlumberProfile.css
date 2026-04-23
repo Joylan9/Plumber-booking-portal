@@ -11,13 +11,14 @@
   gap: 20px;
   padding: 28px 24px;
   margin-bottom: 28px;
+  border-radius: var(--radius-lg);
 }
 
 .pp-avatar {
   width: 64px;
   height: 64px;
   border-radius: 50%;
-  background: var(--navy);
+  background: linear-gradient(135deg, var(--navy), var(--steel-blue));
   color: #fff;
   display: flex;
   align-items: center;
@@ -25,11 +26,13 @@
   font-weight: 700;
   font-size: 1.5rem;
   flex-shrink: 0;
+  box-shadow: var(--shadow-md);
 }
 
 .pp-name {
   font-size: clamp(1.3rem, 3vw, 1.8rem);
   margin-bottom: 2px;
+  letter-spacing: -0.02em;
 }
 
 .pp-area {
@@ -66,6 +69,12 @@
 .pp-detail-card {
   padding: 20px;
   margin-bottom: 14px;
+  border-radius: var(--radius-lg);
+  transition: var(--transition-smooth);
+}
+
+.pp-detail-card:hover {
+  box-shadow: var(--shadow-md);
 }
 
 .pp-detail-card h3 {
@@ -89,11 +98,12 @@
 .service-tag {
   display: inline-block;
   background: var(--mist);
-  color: var(--steel-blue);
+  color: var(--fm-text-secondary);
   padding: 4px 10px;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   font-size: 0.78rem;
   font-weight: 500;
+  transition: var(--transition-fast);
 }
 
 .pp-stats-inline {
@@ -110,7 +120,7 @@
   font-size: 0.72rem;
   color: var(--muted);
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
   font-weight: 600;
 }
 
@@ -125,6 +135,7 @@
   width: 100%;
   padding: 14px;
   margin-top: 4px;
+  border-radius: var(--radius-lg);
 }
 
 /* Reviews section */

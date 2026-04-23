@@ -21,6 +21,7 @@
 .profile-progress {
   padding: 16px 20px;
   margin-bottom: 28px;
+  border-radius: var(--radius-lg);
 }
 
 .progress-header {
@@ -44,15 +45,15 @@
 .progress-bar-track {
   height: 6px;
   background: var(--mist);
-  border-radius: 3px;
+  border-radius: var(--radius-full);
   overflow: hidden;
 }
 
 .progress-bar-fill {
   height: 100%;
   background: linear-gradient(90deg, var(--confirm-green), var(--clear-blue));
-  border-radius: 3px;
-  transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  border-radius: var(--radius-full);
+  transition: width 0.6s var(--ease-premium);
 }
 
 /* Booking cards */
@@ -70,6 +71,13 @@
 
 .booking-card {
   padding: 20px;
+  border-radius: var(--radius-lg);
+  transition: var(--transition-smooth);
+}
+
+.booking-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
 }
 
 .bc-header {
@@ -99,7 +107,7 @@
   flex-direction: column;
   gap: 2px;
   font-size: 0.8rem;
-  color: var(--steel-blue);
+  color: var(--fm-text-secondary);
   margin-bottom: 14px;
 }
 
@@ -123,4 +131,5 @@
 .bc-btn-decline:hover {
   background: var(--danger);
   color: #fff;
+  box-shadow: var(--shadow-sm);
 }

@@ -11,6 +11,8 @@
   padding: 48px 32px;
   max-width: 420px;
   width: 100%;
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
 }
 
 .error-boundary-icon {
@@ -20,6 +22,7 @@
 .error-boundary-title {
   font-size: clamp(1.3rem, 3vw, 1.75rem);
   margin-bottom: 8px;
+  letter-spacing: -0.01em;
 }
 
 .error-boundary-message {
@@ -32,4 +35,5 @@
 .error-boundary-card .btn-primary {
   width: auto;
   padding: 12px 32px;
+  border-radius: var(--radius-lg);
 }

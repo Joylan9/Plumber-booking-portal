@@ -1,5 +1,11 @@
 .review-card {
   padding: 16px 20px;
+  border-radius: var(--radius-lg);
+  transition: var(--transition-smooth);
+}
+
+.review-card:hover {
+  box-shadow: var(--shadow-sm);
 }
 
 .rc-header {
@@ -29,6 +35,6 @@
 .rc-author {
   font-size: 0.8rem;
   font-weight: 600;
-  color: var(--steel-blue);
+  color: var(--fm-text-secondary);
   margin: 0;
 }

@@ -14,45 +14,51 @@
 .admin-header h1 {
   font-size: clamp(1.8rem, 4vw, 2.4rem);
   color: var(--navy);
+  letter-spacing: -0.02em;
 }
 
 .admin-tabs {
   display: flex;
-  gap: 12px;
-  border-bottom: 2px solid var(--mist);
+  gap: 8px;
+  border-bottom: 2px solid var(--fm-border-subtle);
   margin-bottom: 32px;
   overflow-x: auto;
-  padding-bottom: 8px;
+  padding-bottom: 0;
 }
 
 .admin-tab {
   background: none;
   border: none;
   padding: 10px 20px;
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 600;
   color: var(--muted);
   cursor: pointer;
-  border-radius: 8px;
-  transition: all 0.2s ease;
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  transition: var(--transition-fast);
   white-space: nowrap;
+  position: relative;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
 }
 
 .admin-tab:hover {
-  background: rgba(10, 37, 64, 0.05);
+  background: rgba(10, 37, 64, 0.04);
   color: var(--navy);
 }
 
 .admin-tab.active {
-  background: var(--navy);
-  color: #fff;
+  background: transparent;
+  color: var(--navy);
+  border-bottom-color: var(--fm-amber);
 }
 
 .admin-section {
   background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
   padding: 24px;
+  border: 1px solid var(--fm-border-subtle);
 }
 
 .admin-table-wrapper {
@@ -67,8 +73,8 @@
 
 .admin-table th,
 .admin-table td {
-  padding: 16px;
-  border-bottom: 1px solid var(--mist);
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--fm-border-subtle);
   white-space: nowrap;
 }
 
@@ -76,12 +82,20 @@
   font-weight: 600;
   color: var(--muted);
   text-transform: uppercase;
-  font-size: 0.85rem;
-  letter-spacing: 0.5px;
+  font-size: 0.8rem;
+  letter-spacing: 0.05em;
+}
+
+.admin-table tbody tr {
+  transition: background 0.15s ease;
 }
 
 .admin-table tbody tr:hover {
-  background: rgba(10, 37, 64, 0.02);
+  background: rgba(46, 134, 193, 0.04);
+}
+
+.admin-table tbody tr:last-child td {
+  border-bottom: none;
 }
 
 .admin-actions {
@@ -94,15 +108,21 @@
   color: white;
   border: none;
   padding: 6px 12px;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   cursor: pointer;
   font-size: 0.85rem;
   font-weight: 600;
-  transition: background 0.2s;
+  transition: var(--transition-fast);
 }
 
 .btn-danger:hover {
   background-color: #d11a2a;
+  box-shadow: var(--fm-danger-glow) 0 4px 12px;
+  transform: translateY(-1px);
+}
+
+.btn-danger:active {
+  transform: translateY(0) scale(0.98);
 }
 
 .btn-small {

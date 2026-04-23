@@ -134,6 +134,30 @@ The frontend delivers a premium experience powered by **React 19**, **Framer Mot
 
 </td>
 </tr>
+<tr>
+<td width="50%">
+
+### 🔧 Plumber Premium Dashboard
+- Industrial-precision dark-mode sidebar layout
+- Animated stat cards (Today's Jobs, Pending, Active, Completed)
+- Tabbed job filters: All · Pending · In Progress · Completed · Cancelled
+- Slide-out Job Detail Drawer with full customer info
+- Background polling every 30s for live job updates
+- useMemo/useCallback optimized — zero re-render lag
+
+</td>
+<td width="50%">
+
+### 📧 Email Notifications
+- Customer notified on booking Accepted / Declined / Completed
+- Plumber notified when a new review is submitted
+- Reusable `generateEmailTemplate()` HTML generator
+- Table-based layout — Gmail, Outlook & Apple Mail safe
+- Status-aware color badges (green / red / blue)
+- Inline styles only — no external CSS, no JS
+
+</td>
+</tr>
 </table>
 
 <img src="https://raw.githubusercontent.com/trinib/trinib/82213791fa9ff58d3ca768ddd6de2489ec23ffca/images/footer.svg" width="100%">
@@ -229,10 +253,11 @@ sequenceDiagram
 📦 FlowMatch
 ├── 📂 frontend/
 │   ├── 📂 src/
-│   │   ├── 📂 components/          # 13 reusable UI components
+│   │   ├── 📂 components/          # 15 reusable UI components
 │   │   │   ├── Navbar.jsx          # Scroll-aware sticky navigation
 │   │   │   ├── Footer.jsx          # Site-wide footer
 │   │   │   ├── DashboardLayout.jsx # Sidebar + content grid layout
+│   │   │   ├── PlumberLayout.jsx   # Premium sidebar layout for plumber role
 │   │   │   ├── PageWrapper.jsx     # Framer Motion page transitions
 │   │   │   ├── Toast.jsx           # Portal-based notification system
 │   │   │   ├── ConfirmModal.jsx    # Danger-action confirmation dialog
@@ -243,7 +268,7 @@ sequenceDiagram
 │   │   │   ├── EmptyState.jsx      # Friendly empty data messaging
 │   │   │   ├── ErrorState.jsx      # Error with retry action
 │   │   │   └── ErrorBoundary.jsx   # React error boundary wrapper
-│   │   ├── 📂 pages/               # 13 route-level pages
+│   │   ├── 📂 pages/               # 16 route-level pages
 │   │   │   ├── Home.jsx            # Hero + How It Works + Services
 │   │   │   ├── Login.jsx           # Split-layout authentication
 │   │   │   ├── Register.jsx        # Multi-step registration wizard
@@ -255,7 +280,9 @@ sequenceDiagram
 │   │   │   ├── Confirmation.jsx    # Post-booking success screen
 │   │   │   ├── BookingDetail.jsx   # Status timeline + actions
 │   │   │   ├── CustomerDashboard   # Stats + booking table
-│   │   │   ├── PlumberDashboard    # Job cards + accept/decline
+│   │   │   ├── PlumberDashboard    # Tabbed jobs + stat cards + drawer
+│   │   │   ├── PlumberProfileSettings.jsx # Plumber-specific settings UI
+│   │   │   ├── PlumberReviews.jsx  # Reviews page with star distribution chart
 │   │   │   ├── AdminDashboard.jsx  # Full CRUD admin panel
 │   │   │   └── Profile.jsx         # User profile editor + avatar
 │   │   ├── 📂 services/            # API service layer (Axios)
@@ -273,7 +300,8 @@ sequenceDiagram
 │   │   ├── 📂 routes/              # Route protection
 │   │   │   └── ProtectedRoute.jsx  # Auth-gated route wrapper
 │   │   ├── 📂 styles/              # Design system
-│   │   │   └── tokens.css          # Design tokens (colors, spacing)
+│   │   │   ├── tokens.css          # Global design tokens (colors, spacing)
+│   │   │   └── plumber-tokens.css  # Plumber-role theme tokens
 │   │   ├── 📂 utils/               # Utility functions
 │   │   │   └── format.js           # Date, currency, status helpers
 │   │   ├── App.jsx                 # Root component + route config
@@ -315,7 +343,8 @@ sequenceDiagram
 │   │   │   ├── generateToken.js    # JWT token generation
 │   │   │   ├── httpError.js        # Custom HTTP error factory
 │   │   │   ├── sanitizeUser.js     # Strip sensitive user fields
-│   │   │   └── sendEmail.js        # Nodemailer SMTP wrapper
+│   │   │   ├── sendEmail.js        # Nodemailer SMTP wrapper
+│   │   │   └── emailTemplates.js   # Reusable HTML email template generator
 │   │   ├── 📂 scripts/             # CLI utilities
 │   │   │   ├── createAdmin.js      # Seed admin user
 │   │   │   ├── seedCategories.js   # Seed default categories
@@ -453,6 +482,12 @@ Below are the core REST API endpoints. All protected routes require a `Bearer <J
 |--------|----------|------|-------------|
 | `GET`  | `/` | ❌ | List all service categories |
 
+### Reviews (`/api/reviews`)
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| `POST` | `/` | ✅ JWT (Customer) | Submit a review for a completed booking |
+| `GET`  | `/plumber/:plumberId` | ❌ | Get paginated reviews for a plumber |
+
 ### Admin (`/api/admin`)
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
@@ -495,6 +530,11 @@ Below are the core REST API endpoints. All protected routes require a `Bearer <J
 ## 📸 Screenshots
 
 <div align="center">
+  <img src="homepage.png" width="90%" alt="FlowMatch Homepage" style="border-radius:10px; margin:8px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);"/>
+  <br/><em>🖼️ FlowMatch — Homepage Hero · Professional Plumbing Services, When You Need Them Most</em>
+</div>
+
+<div align="center">
   <img src="https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=800&q=80" width="45%" alt="Plumber Directory" style="border-radius:8px; margin:8px; box-shadow: 0 10px 30px rgba(0,0,0,0.15);"/>
   <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&q=80" width="45%" alt="Admin Dashboard" style="border-radius:8px; margin:8px; box-shadow: 0 10px 30px rgba(0,0,0,0.15);"/>
   <br/><em>🖼️ App Previews — Plumber Directory & Data Dashboards</em>
@@ -509,6 +549,9 @@ Below are the core REST API endpoints. All protected routes require a `Bearer <J
 - [x] ✅ Booking Workflow (Pending → Accepted → Completed)
 - [x] ✅ Admin Dashboard (Full CRUD)
 - [x] ✅ Review & Rating System
+- [x] ✅ Plumber Premium Dashboard (Tabbed UI, Stat Cards, Job Drawer)
+- [x] ✅ Email Notifications (Booking Status + New Review alerts)
+- [x] ✅ Premium HTML Email Templates (cross-client compatible)
 - [ ] 🔄 Real-time chat between Customer & Plumber (Socket.io)
 - [ ] 🔄 Payment Gateway Integration (Stripe)
 - [ ] 🔄 Push Notifications for booking updates

@@ -142,7 +142,27 @@ const getPlumberReviews = async (req, res, next) => {
   }
 };
 
+const getRecentReviews = async (req, res, next) => {
+  try {
+    const limit = Number.parseInt(req.query.limit, 10) || 6;
+
+    const reviews = await populateReview(
+      Review.find()
+        .sort({ createdAt: -1 })
+        .limit(limit)
+    );
+
+    return res.status(200).json({
+      success: true,
+      data: reviews || [],
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
 module.exports = {
   createReview,
   getPlumberReviews,
+  getRecentReviews,
 };

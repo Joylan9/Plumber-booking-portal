@@ -1,5 +1,6 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { getRecentReviews } from '../services/reviewService';
 import { motion } from 'framer-motion';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -28,6 +29,7 @@ const staggerContainer = {
 const Home = () => {
   const heroRef = useRef(null);
   const bgRef = useRef(null);
+  const [dynamicReviews, setDynamicReviews] = useState([]);
 
   useEffect(() => {
     // Parallax logic explicitly requested
@@ -43,6 +45,21 @@ const Home = () => {
            }
        });
     }
+
+    const fetchReviews = async () => {
+      try {
+        const response = await getRecentReviews(4);
+        if (response && response.success) {
+          setDynamicReviews(response.data);
+        }
+      } catch (err) {
+        console.error('Failed to fetch reviews:', err);
+      }
+    };
+
+    fetchReviews();
+    const interval = setInterval(fetchReviews, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   // Split word animation generator
@@ -229,6 +246,22 @@ const Home = () => {
             whileInView="visible"
             viewport={{ once: true, margin: "-80px" }}
         >
+           {dynamicReviews && dynamicReviews.length > 0 && dynamicReviews.map(review => (
+             <motion.div key={review._id} className="card-panel testimonial-card" variants={fadeUpVariant} whileHover={{ y: -6, boxShadow: "0 20px 60px rgba(0,0,0,0.12)" }}>
+               <div className="stars">
+                 {[1,2,3,4,5].map(i => (
+                   <svg key={i} width="16" height="16" viewBox="0 0 24 24" fill={i <= review.rating ? "var(--amber-cta)" : "none"} stroke="var(--amber-cta)" strokeWidth="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                 ))}
+               </div>
+               <p>"{review.comment}"</p>
+               <h4>— {review.customerId?.name || 'Anonymous'}</h4>
+               {review.plumberId?.name && (
+                 <span style={{ display: 'block', fontSize: '0.85rem', color: 'var(--steel-gray)', marginTop: '4px' }}>
+                   Reviewed: {review.plumberId.name}
+                 </span>
+               )}
+             </motion.div>
+           ))}
            <motion.div className="card-panel testimonial-card" variants={fadeUpVariant} whileHover={{ y: -6, boxShadow: "0 20px 60px rgba(0,0,0,0.12)" }}>
              <div className="stars">
                {[1,2,3,4,5].map(i => (
@@ -237,6 +270,9 @@ const Home = () => {
              </div>
              <p>"The plumber arrived in 20 minutes and fixed our burst pipe flawlessly. Highly recommended!"</p>
              <h4>— Sarah J.</h4>
+             <span style={{ display: 'block', fontSize: '0.85rem', color: 'var(--steel-gray)', marginTop: '4px' }}>
+               Reviewed: Professional Plumber
+             </span>
            </motion.div>
            <motion.div className="card-panel testimonial-card" variants={fadeUpVariant} whileHover={{ y: -6, boxShadow: "0 20px 60px rgba(0,0,0,0.12)" }}>
              <div className="stars">
@@ -246,6 +282,9 @@ const Home = () => {
              </div>
              <p>"Clear pricing, professional demeanor, and extremely clean work on our bathroom remodel."</p>
              <h4>— Mark T.</h4>
+             <span style={{ display: 'block', fontSize: '0.85rem', color: 'var(--steel-gray)', marginTop: '4px' }}>
+               Reviewed: Top Tier Services
+             </span>
            </motion.div>
         </motion.div>
       </section>

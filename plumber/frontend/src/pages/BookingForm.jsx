@@ -10,8 +10,11 @@ import './BookingForm.css';
 
 const TIME_SLOTS = [];
 for (let h = 8; h <= 18; h++) {
-  TIME_SLOTS.push(`${String(h).padStart(2, '0')}:00`);
-  if (h < 18) TIME_SLOTS.push(`${String(h).padStart(2, '0')}:30`);
+  const period = h >= 12 ? 'PM' : 'AM';
+  const hour12 = h % 12 || 12;
+  const formattedHour = String(hour12).padStart(2, '0');
+  TIME_SLOTS.push(`${formattedHour}:00 ${period}`);
+  if (h < 18) TIME_SLOTS.push(`${formattedHour}:30 ${period}`);
 }
 
 const BookingForm = () => {

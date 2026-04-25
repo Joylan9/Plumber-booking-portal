@@ -1,1 +1,0 @@
-import{t as e}from"./api-UHjbVcnY.js";var t=async(t={})=>{let n=new URLSearchParams;return t.area&&n.append(`area`,t.area),t.service&&n.append(`service`,t.service),(await e.get(`/api/plumbers?${n.toString()}`)).data},n=async t=>(await e.get(`/api/plumbers/${t}`)).data;export{t as n,n as t};

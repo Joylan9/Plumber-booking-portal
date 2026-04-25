@@ -1,1 +1,0 @@
-import{t as e}from"./api-UHjbVcnY.js";var t=null,n=async()=>{if(t)return t;try{let n=await e.get(`/api/categories`);return t=n.data?.data||n.data||[],t}catch(e){return console.warn(`Failed to fetch categories, falling back to empty array`,e),[]}};export{n as t};

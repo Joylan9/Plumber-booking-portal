@@ -22,6 +22,7 @@
   <img src="https://img.shields.io/badge/Axios-HTTP-5A29E4?style=for-the-badge&logo=axios&logoColor=white"/>
   <img src="https://img.shields.io/badge/Nodemailer-Email-22B573?style=for-the-badge&logo=minutemailer&logoColor=white"/>
   <img src="https://img.shields.io/badge/Multer-Uploads-FF6600?style=for-the-badge&logo=files&logoColor=white"/>
+  <img src="https://img.shields.io/badge/Leaflet-1.9-199900?style=for-the-badge&logo=leaflet&logoColor=white"/>
   <img src="https://img.shields.io/github/stars/Joylan9/Plumber-booking-portal?style=for-the-badge&color=gold"/>
   <img src="https://img.shields.io/github/license/Joylan9/Plumber-booking-portal?style=for-the-badge"/>
 </p>
@@ -72,9 +73,11 @@ The frontend delivers a premium experience powered by **React 19**, **Framer Mot
 - JWT-based stateless authentication
 - Role-based access: **Customer**, **Plumber**, **Admin**
 - Bcrypt password hashing (bcryptjs)
-- Forgot / Reset password via email (Nodemailer)
+- Forgot / Reset password via 6-digit OTP (SHA-256 hashed, 10-min expiry)
+- Token-based password reset (`/reset-password/:token`)
 - Protected API routes with middleware guards
 - CORS whitelist with origin validation
+- Global 401 interceptor with auto-redirect to login
 
 </td>
 <td width="50%">
@@ -82,8 +85,11 @@ The frontend delivers a premium experience powered by **React 19**, **Framer Mot
 ### 🚿 Booking System
 - Search & filter plumbers by area, rating, category
 - Real-time cost preview based on hourly rate
-- Full booking lifecycle: Pending → Accepted → Completed
+- Full booking lifecycle: Pending → Accepted → Completed / Cancelled
+- Validated status transitions (e.g., completed → no further changes)
 - Booking detail view with visual status timeline
+- Interactive Leaflet map with customer/plumber markers
+- OSRM routing with car/bike/walk travel time estimates
 - Role-specific dashboards (Customer vs Plumber)
 - Cancel/decline workflows with confirmation modals
 
@@ -94,10 +100,12 @@ The frontend delivers a premium experience powered by **React 19**, **Framer Mot
 
 ### ⭐ Reviews & Ratings
 - Post-completion star rating (1–5) with comments
-- Dynamic plumber rating aggregation
+- Dynamic plumber rating aggregation (MongoDB aggregation pipeline)
 - Public plumber profile with review history
 - Paginated review loading (load more)
 - Interactive hover-to-rate star component
+- Recent reviews API for dynamic homepage testimonials
+- One-review-per-booking enforcement (unique index)
 
 </td>
 <td width="50%">
@@ -127,10 +135,13 @@ The frontend delivers a premium experience powered by **React 19**, **Framer Mot
 
 ### 🛡️ Admin Dashboard
 - Full CRUD: Users, Bookings, Reviews, Categories
-- Tabbed interface with paginated data tables
-- Category management (create/delete)
+- Tabbed interface with server-side paginated data tables
+- Category management (create / update / delete)
+- User management (view / edit / delete with cascade)
+- Cascade deletion: removing a user purges associated bookings & reviews
 - Danger-zone deletion with confirmation modals
 - Real-time status badges across all entities
+- Safe null-reference handling for deleted user references
 
 </td>
 </tr>
@@ -200,10 +211,13 @@ The frontend delivers a premium experience powered by **React 19**, **Framer Mot
 | **Frontend** | Vite | 8.0 | Build tool & dev server |
 | **Frontend** | Framer Motion | 12.38 | Page transitions & animations |
 | **Frontend** | GSAP | 3.14 | ScrollTrigger parallax effects |
+| **Frontend** | @gsap/react | 2.1 | GSAP React integration hooks |
 | **Frontend** | Lenis | 1.3 | Smooth scroll engine |
 | **Frontend** | React Router DOM | 7.14 | Client-side routing |
 | **Frontend** | Axios | 1.15 | HTTP client |
 | **Frontend** | React Intersection Observer | 10.0 | Viewport detection |
+| **Frontend** | Leaflet | 1.9 | Interactive map rendering |
+| **Frontend** | React-Leaflet | 5.0 | React bindings for Leaflet |
 | **Backend** | Node.js + Express | 5.2 | REST API server |
 | **Backend** | Mongoose | 9.4 | MongoDB ODM |
 | **Backend** | JSON Web Token | 9.0 | Stateless authentication |
@@ -228,6 +242,7 @@ The frontend delivers a premium experience powered by **React 19**, **Framer Mot
 │   │   │   ├── DashboardLayout.jsx # Sidebar + content grid layout
 │   │   │   ├── PlumberLayout.jsx   # Premium sidebar layout for plumber role
 │   │   │   ├── PageWrapper.jsx     # Framer Motion page transitions
+│   │   │   ├── BookingMap.jsx      # Leaflet map + OSRM routing
 │   │   │   ├── Toast.jsx           # Portal-based notification system
 │   │   │   ├── ConfirmModal.jsx    # Danger-action confirmation dialog
 │   │   │   ├── SkeletonLoader.jsx  # Shimmer loading placeholders
@@ -238,7 +253,7 @@ The frontend delivers a premium experience powered by **React 19**, **Framer Mot
 │   │   │   ├── ErrorState.jsx      # Error with retry action
 │   │   │   └── ErrorBoundary.jsx   # React error boundary wrapper
 │   │   ├── 📂 pages/               # 16 route-level pages
-│   │   │   ├── Home.jsx            # Hero + How It Works + Services
+│   │   │   ├── Home.jsx            # Hero + How It Works + Services + Dynamic Reviews
 │   │   │   ├── Login.jsx           # Split-layout authentication
 │   │   │   ├── Register.jsx        # Multi-step registration wizard
 │   │   │   ├── ForgotPassword.jsx  # Email-based password recovery
@@ -273,10 +288,13 @@ The frontend delivers a premium experience powered by **React 19**, **Framer Mot
 │   │   │   └── plumber-tokens.css  # Plumber-role theme tokens
 │   │   ├── 📂 utils/               # Utility functions
 │   │   │   └── format.js           # Date, currency, status helpers
+│   │   ├── 📂 assets/              # Static assets (hero.png, SVGs)
 │   │   ├── App.jsx                 # Root component + route config
+│   │   ├── App.css                 # App-level styles
 │   │   ├── main.jsx                # Entry point + Lenis scroll
 │   │   └── index.css               # Global styles + base components
-│   ├── index.html                  # HTML entry with SEO meta tags
+│   ├── 📂 public/                  # Favicon, logo, icons
+│   ├── index.html                  # HTML entry with SEO meta + Leaflet CSS
 │   ├── vite.config.js              # Vite configuration
 │   └── package.json                # Frontend dependencies
 │
@@ -386,6 +404,9 @@ npm run seed:categories
 
 # To create a default Admin user, run:
 node src/scripts/createAdmin.js
+
+# Run API smoke tests against a running backend:
+npm run smoke:test
 ```
 
 <img src="https://raw.githubusercontent.com/trinib/trinib/82213791fa9ff58d3ca768ddd6de2489ec23ffca/images/footer.svg" width="100%">
@@ -400,8 +421,9 @@ Create a `.env` file in the `backend/` directory with the following variables:
 |----------|----------|---------|-------------|
 | `PORT` | ❌ No | `5000` | Backend server port |
 | `MONGODB_URI` | ✅ Yes | `mongodb://localhost:27017/flowmatch` | Connection string for MongoDB |
+| `MONGO_URI` | ❌ No | `mongodb://localhost:27017/flowmatch` | Alias for `MONGODB_URI` (either works) |
 | `JWT_SECRET` | ✅ Yes | `your_super_secret_jwt_key` | Secret used to sign JWT tokens |
-| `FRONTEND_URL` | ✅ Yes | `http://localhost:5173` | Allowed CORS origin |
+| `FRONTEND_URL` | ✅ Yes | `http://localhost:5173` | Allowed CORS origin (comma-separated for multiple) |
 | `SMTP_HOST` | ❌ No | `smtp.gmail.com` | Email provider SMTP host |
 | `SMTP_PORT` | ❌ No | `587` | Email provider SMTP port |
 | `SMTP_EMAIL` | ❌ No | `youremail@gmail.com` | Sender email address |
@@ -409,8 +431,11 @@ Create a `.env` file in the `backend/` directory with the following variables:
 | `FROM_EMAIL` | ❌ No | `noreply@flowmatch.com` | Sender alias email |
 | `FROM_NAME` | ❌ No | `FlowMatch` | Sender alias name |
 | `ENABLE_DEV_EMAIL_LOGS`| ❌ No | `true` | Log emails to console instead of sending |
+| `SMOKE_BASE_URL` | ❌ No | `http://localhost:5000` | Base URL for the smoke test suite |
 
-*(Note: The frontend connects to `http://localhost:5000` via proxy settings in `vite.config.js` by default).*
+The frontend uses an optional `VITE_API_URL` environment variable to configure the backend base URL. If not set, it defaults to `http://localhost:5000`.
+
+*(Note: The frontend connects to the backend via the Axios `baseURL` in `src/services/api.js` — there is no Vite proxy configured).*
 
 <img src="https://raw.githubusercontent.com/trinib/trinib/82213791fa9ff58d3ca768ddd6de2489ec23ffca/images/footer.svg" width="100%">
 
@@ -423,8 +448,10 @@ Below are the core REST API endpoints. All protected routes require a `Bearer <J
 |--------|----------|------|-------------|
 | `POST` | `/register` | ❌ | Register a new user (customer/plumber) |
 | `POST` | `/login` | ❌ | Authenticate user & get token |
-| `POST` | `/forgot-password`| ❌ | Request password reset email |
-| `POST` | `/reset-password` | ❌ | Reset password via token |
+| `POST` | `/forgot-password`| ❌ | Request password reset OTP via email |
+| `POST` | `/reset-password` | ❌ | Reset password via OTP |
+| `POST` | `/reset-password/:token` | ❌ | Reset password via URL token |
+| `PUT`  | `/reset-password/:token` | ❌ | Reset password via URL token (alias) |
 
 ### Users & Profiles (`/api/users`)
 | Method | Endpoint | Auth | Description |
@@ -442,28 +469,41 @@ Below are the core REST API endpoints. All protected routes require a `Bearer <J
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
 | `POST` | `/` | ✅ JWT (Customer) | Create a new booking request |
-| `GET`  | `/my-bookings` | ✅ JWT | Get bookings for current user |
+| `GET`  | `/` | ✅ JWT | Get bookings for current user |
+| `GET`  | `/my-bookings` | ✅ JWT | Get bookings for current user (alias) |
 | `GET`  | `/:id` | ✅ JWT | Get specific booking details |
 | `PUT`  | `/:id/status` | ✅ JWT (Plumber/Admin) | Accept, decline, or complete booking |
+| `PATCH`| `/:id/status` | ✅ JWT (Plumber/Admin) | Accept, decline, or complete booking (alias) |
 
 ### Categories (`/api/categories`)
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
 | `GET`  | `/` | ❌ | List all service categories |
+| `POST` | `/` | ✅ JWT (Admin) | Create a new service category |
 
 ### Reviews (`/api/reviews`)
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
+| `GET`  | `/recent` | ❌ | Get recent reviews (default limit: 6) |
 | `POST` | `/` | ✅ JWT (Customer) | Submit a review for a completed booking |
 | `GET`  | `/plumber/:plumberId` | ❌ | Get paginated reviews for a plumber |
 
 ### Admin (`/api/admin`)
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
-| `GET`  | `/users` | ✅ JWT (Admin) | List all registered users |
-| `GET`  | `/bookings` | ✅ JWT (Admin) | List all platform bookings |
-| `GET`  | `/reviews` | ✅ JWT (Admin) | List all user reviews |
-| `DELETE`| `/users/:id` | ✅ JWT (Admin) | Delete a user |
+| `GET`  | `/users` | ✅ JWT (Admin) | List all registered users (paginated, filterable by role) |
+| `GET`  | `/users/:id` | ✅ JWT (Admin) | Get a single user by ID |
+| `PUT`  | `/users/:id` | ✅ JWT (Admin) | Update a user's profile fields |
+| `DELETE`| `/users/:id` | ✅ JWT (Admin) | Delete a user (cascades bookings & reviews) |
+| `GET`  | `/bookings` | ✅ JWT (Admin) | List all platform bookings (paginated) |
+| `GET`  | `/bookings/:id` | ✅ JWT (Admin) | Get a single booking by ID |
+| `DELETE`| `/bookings/:id` | ✅ JWT (Admin) | Delete a booking |
+| `GET`  | `/reviews` | ✅ JWT (Admin) | List all user reviews (paginated) |
+| `DELETE`| `/reviews/:id` | ✅ JWT (Admin) | Delete a review (recalculates plumber rating) |
+| `GET`  | `/categories` | ✅ JWT (Admin) | List all categories |
+| `POST` | `/categories` | ✅ JWT (Admin) | Create a new category |
+| `PUT`  | `/categories/:id` | ✅ JWT (Admin) | Update a category |
+| `DELETE`| `/categories/:id` | ✅ JWT (Admin) | Delete a category |
 
 <details>
 <summary>📥 POST /api/bookings — Example Request & Response</summary>
@@ -472,24 +512,32 @@ Below are the core REST API endpoints. All protected routes require a `Bearer <J
 ```json
 {
   "plumberId": "60d5ecb8b392d7001532f123",
-  "category": "Emergency Plumbing",
-  "issueDescription": "Pipe burst in the kitchen, flooding the floor.",
+  "serviceType": "Emergency Plumbing",
+  "date": "2024-06-15",
+  "time": "10:00 AM",
   "address": "123 Main St, Springfield",
-  "contactPhone": "555-0198",
-  "estimatedHours": 2
+  "issueDescription": "Pipe burst in the kitchen, flooding the floor.",
+  "notes": "Please bring extra towels."
 }
 ```
 
 **Response (201 Created):**
 ```json
 {
-  "_id": "60d5eccfb392d7001532f124",
-  "customer": "60d5ec12b392d7001532f120",
-  "plumber": "60d5ecb8b392d7001532f123",
-  "category": "Emergency Plumbing",
-  "status": "pending",
-  "totalCost": 150,
-  "createdAt": "2024-05-20T10:30:00Z"
+  "success": true,
+  "data": {
+    "_id": "60d5eccfb392d7001532f124",
+    "customerId": { "_id": "60d5ec12b392d7001532f120", "name": "John Doe", "email": "john@example.com" },
+    "plumberId": { "_id": "60d5ecb8b392d7001532f123", "name": "Mike Smith", "email": "mike@example.com" },
+    "serviceType": "Emergency Plumbing",
+    "date": "2024-06-15T00:00:00.000Z",
+    "time": "10:00 AM",
+    "address": "123 Main St, Springfield",
+    "issueDescription": "Pipe burst in the kitchen, flooding the floor.",
+    "status": "pending",
+    "createdAt": "2024-05-20T10:30:00.000Z"
+  },
+  "message": "Booking created successfully"
 }
 ```
 </details>
@@ -515,6 +563,10 @@ Below are the core REST API endpoints. All protected routes require a `Bearer <J
 - [x] ✅ Plumber Premium Dashboard (Tabbed UI, Stat Cards, Job Drawer)
 - [x] ✅ Email Notifications (Booking Status + New Review alerts)
 - [x] ✅ Premium HTML Email Templates (cross-client compatible)
+- [x] ✅ Interactive Booking Map (Leaflet + OSRM routing with car/bike/walk modes)
+- [x] ✅ Dynamic Client Reviews on Homepage (auto-refreshing every 30s)
+- [x] ✅ Admin Cascade Deletion (user removal purges bookings & reviews)
+- [x] ✅ Full Admin Category CRUD (create / update / delete)
 - [ ] 🔄 Real-time chat between Customer & Plumber (Socket.io)
 - [ ] 🔄 Payment Gateway Integration (Stripe)
 - [ ] 🔄 Push Notifications for booking updates

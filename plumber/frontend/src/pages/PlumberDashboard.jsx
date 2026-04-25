@@ -10,6 +10,7 @@ import SkeletonLoader from '../components/SkeletonLoader';
 import ErrorState from '../components/ErrorState';
 import EmptyState from '../components/EmptyState';
 import { toast } from '../components/Toast';
+import BookingMap from '../components/BookingMap';
 import './PlumberDashboard.css';
 
 const stagger = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.05 } } };
@@ -74,6 +75,16 @@ export default function PlumberDashboard() {
     const interval = setInterval(() => fetchData(true), 30000); // Polling every 30s
     return () => clearInterval(interval);
   }, [fetchData]);
+
+  // Lock background scroll when drawer is open
+  useEffect(() => {
+    if (selectedJob) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [selectedJob]);
 
   const handleAction = useCallback(async () => {
     const { id, action } = modal;
@@ -251,7 +262,7 @@ export default function PlumberDashboard() {
                   <button className="pl-drawer-close" onClick={() => setSelectedJob(null)}>×</button>
                 </div>
                 
-                <div className="pl-drawer-body">
+                <div className="pl-drawer-body" style={{ overflowY: 'auto', flex: '1 1 0%', height: 0 }}>
                   <div className="pl-drawer-status-bar">
                     <StatusBadge status={selectedJob.status} />
                     <span className="pl-job-id">ID: {selectedJob._id.substring(18)}</span>
@@ -274,6 +285,16 @@ export default function PlumberDashboard() {
                     <div className="pl-info-row">
                       <span>Address</span>
                       <strong>{selectedJob.address}</strong>
+                    </div>
+                  </div>
+
+                  <div className="pl-detail-section" style={{ marginTop: '20px', marginBottom: '20px' }}>
+                    <h4>Location Map</h4>
+                    <div style={{ marginTop: '10px' }}>
+                      <BookingMap 
+                        customerAddress={selectedJob.address} 
+                        plumberAddress={user?.area || 'Plumber Location'} 
+                      />
                     </div>
                   </div>
 

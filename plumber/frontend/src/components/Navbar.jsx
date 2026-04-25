@@ -16,39 +16,21 @@ const Navbar = () => {
     setIsOpen(false);
   }, [location.pathname]);
 
-  // Map scroll value to specific CSS states
-  const navBg = useTransform(
+  // Subtle shadow enhancement on scroll
+  const navShadow = useTransform(
     scrollY, 
     [0, 80], 
-    ["var(--steel-blue)", "rgba(10, 37, 64, 0.85)"]
-  );
-  
-  const navBlur = useTransform(
-    scrollY,
-    [0, 80],
-    ["blur(0px)", "blur(20px)"]
-  );
-  
-  const navBorder = useTransform(
-    scrollY,
-    [0, 80],
-    ["1px solid transparent", "1px solid rgba(255,255,255,0.08)"]
+    ["0 1px 0 rgba(10,37,64,0.06), 0 4px 20px rgba(10,37,64,0.04)", "0 1px 0 rgba(10,37,64,0.08), 0 8px 32px rgba(10,37,64,0.08)"]
   );
 
   return (
     <motion.nav 
       className="main-navbar"
-      style={{ 
-        backgroundColor: navBg, 
-        backdropFilter: navBlur,
-        WebkitBackdropFilter: navBlur,
-        borderBottom: navBorder 
-      }}
+      style={{ boxShadow: navShadow }}
     >
       <div className="navbar-container">
         <Link to="/" className="navbar-logo">
-          <motion.span className="logo-icon" whileHover={{ rotate: 5 }}>💧</motion.span>
-          <span className="logo-text">Flow<span className="highlight">Match</span></span>
+          <img src="/logo-full.png" alt="FlowMatch" className="navbar-logo-img" />
         </Link>
 
         {/* Hamburger Icon */}

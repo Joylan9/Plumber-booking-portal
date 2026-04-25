@@ -321,6 +321,32 @@ export default function PlumberDashboard() {
                       <p className="pl-desc-box">{selectedJob.notes}</p>
                     </div>
                   )}
+
+                  <div className="pl-detail-section">
+                    <h4>Booking Timeline</h4>
+                    <div className="pl-info-row">
+                      <span>Booking ID</span>
+                      <strong style={{ fontSize: '0.78rem', fontFamily: 'var(--font-mono, monospace)' }}>{selectedJob._id}</strong>
+                    </div>
+                    {selectedJob.createdAt && (
+                      <div className="pl-info-row">
+                        <span>Created On</span>
+                        <strong>{formatDate(selectedJob.createdAt)}</strong>
+                      </div>
+                    )}
+                    {selectedJob.completedAt && (
+                      <div className="pl-info-row">
+                        <span>Completed On</span>
+                        <strong>{formatDate(selectedJob.completedAt)}</strong>
+                      </div>
+                    )}
+                    {selectedJob.cancelledAt && (
+                      <div className="pl-info-row">
+                        <span>Cancelled On</span>
+                        <strong>{formatDate(selectedJob.cancelledAt)}</strong>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <div className="pl-drawer-footer">

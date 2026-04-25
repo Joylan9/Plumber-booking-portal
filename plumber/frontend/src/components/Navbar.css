@@ -34,15 +34,15 @@
 }
 
 .navbar-logo-img {
-    height: 40px;
-    width: auto;
+    height: auto;
+    width: 180px;
     object-fit: contain;
     display: block;
 }
 
 @media (max-width: 768px) {
     .navbar-logo-img {
-        height: 32px;
+        width: 140px;
     }
 }
 

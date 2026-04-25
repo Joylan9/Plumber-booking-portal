@@ -56,10 +56,14 @@ const Register = () => {
   const [error, setError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Category data from API
+  // Category data from API (no longer used for the UI directly, but keeping state to avoid breaking existing logic if any)
   const [categories, setCategories] = useState([]);
   const [categoriesLoading, setCategoriesLoading] = useState(false);
   const [categoriesError, setCategoriesError] = useState(null);
+
+  // New states for the dropdown and custom input
+  const [selectedServiceType, setSelectedServiceType] = useState('');
+  const [customServicesInput, setCustomServicesInput] = useState('');
   
   const { login } = useContext(AuthContext);
   const navigate = useNavigate();
@@ -306,33 +310,43 @@ const Register = () => {
 
                   <div className="form-group">
                     <label>Services</label>
-                    {categoriesLoading ? (
-                      <p className="category-loading">Loading available services…</p>
-                    ) : categoriesError || serviceOptions.length === 0 ? (
-                      /* Fallback to free-text input if API categories unavailable */
+                    <div className="input-wrapper" style={{ marginBottom: '10px' }}>
+                      <select 
+                        className="premium-input animated-underline"
+                        value={selectedServiceType}
+                        onChange={(e) => {
+                          setSelectedServiceType(e.target.value);
+                          if (e.target.value !== 'Other') {
+                            setFormData({...formData, services: [e.target.value]});
+                          } else {
+                            setFormData({...formData, services: customServicesInput.split(',').map(s => s.trim()).filter(Boolean)});
+                          }
+                        }}
+                        required
+                        style={{ appearance: 'auto' }}
+                      >
+                        <option value="" disabled>Select primary service</option>
+                        <option value="Drain Cleaning">Drain Cleaning</option>
+                        <option value="Pipe Installation">Pipe Installation</option>
+                        <option value="Water Heater Repair">Water Heater Repair</option>
+                        <option value="Leak Detection">Leak Detection</option>
+                        <option value="General Plumbing">General Plumbing</option>
+                        <option value="Other">Other</option>
+                      </select>
+                    </div>
+                    {selectedServiceType === 'Other' && (
                       <div className="input-wrapper">
                         <input
                           type="text"
-                          name="servicesFallback"
                           className="premium-input animated-underline"
-                          placeholder="Pipe Repair, Installation, Drain Cleaning"
-                          value={formData.services.join(', ')}
-                          onChange={(e) => setFormData({...formData, services: e.target.value.split(',').map(s => s.trim()).filter(Boolean)})}
+                          placeholder="Type your services (comma separated)"
+                          value={customServicesInput}
+                          onChange={(e) => {
+                            setCustomServicesInput(e.target.value);
+                            setFormData({...formData, services: e.target.value.split(',').map(s => s.trim()).filter(Boolean)});
+                          }}
                           required
                         />
-                      </div>
-                    ) : (
-                      <div className="category-grid">
-                        {serviceOptions.map((svc) => (
-                          <label key={svc} className={`category-chip ${formData.services.includes(svc) ? 'active' : ''}`}>
-                            <input
-                              type="checkbox"
-                              checked={formData.services.includes(svc)}
-                              onChange={() => toggleService(svc)}
-                            />
-                            {svc}
-                          </label>
-                        ))}
                       </div>
                     )}
                   </div>

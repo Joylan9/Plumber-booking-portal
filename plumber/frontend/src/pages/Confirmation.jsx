@@ -1,5 +1,6 @@
 import { useLocation, Link, Navigate } from 'react-router-dom';
 import { formatDate, normalizeStatus } from '../utils/format';
+import BookingMap from '../components/BookingMap';
 import './Confirmation.css';
 
 const Confirmation = () => {
@@ -48,11 +49,12 @@ const Confirmation = () => {
           </div>
         </div>
 
-        <div className="card-panel map-placeholder">
-          <div className="map-overlay">
-            <span className="map-icon">🗺️</span>
-            <p>Live Plumber Tracking Available Shortly</p>
-          </div>
+        <div className="card-panel" style={{ padding: '16px' }}>
+          <h3 className="summary-title" style={{ marginBottom: '16px' }}>Service Route</h3>
+          <BookingMap 
+            customerAddress={booking.address} 
+            plumberAddress={booking.plumberId?.area || 'Plumber Location'} 
+          />
         </div>
 
         <div className="confirmation-actions">

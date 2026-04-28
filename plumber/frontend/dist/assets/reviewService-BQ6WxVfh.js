@@ -1,0 +1,1 @@
+import{t as e}from"./api-BDtRLx2S.js";var t=async t=>(await e.post(`/api/reviews`,t)).data,n=async(t,n=1)=>(await e.get(`/api/reviews/plumber/${t}?page=${n}`)).data,r=async(t=6)=>(await e.get(`/api/reviews/recent?limit=${t}`)).data;export{n,r,t};

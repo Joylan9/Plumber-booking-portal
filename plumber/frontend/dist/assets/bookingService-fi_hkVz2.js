@@ -1,0 +1,1 @@
+import{t as e}from"./api-BDtRLx2S.js";var t=async t=>(await e.post(`/api/bookings`,t)).data,n=async()=>(await e.get(`/api/bookings/my-bookings`)).data,r=async(t,n)=>(await e.put(`/api/bookings/${t}/status`,{status:n})).data,i=async t=>(await e.get(`/api/bookings/${t}`)).data;export{r as i,i as n,n as r,t};

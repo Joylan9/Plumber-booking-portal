@@ -637,10 +637,7 @@ git push origin feature/AmazingFeature
   </a>
 </p>
 
-<p align="center">
-  <img src="https://github-readme-stats.vercel.app/api?username=Joylan9&show_icons=true&theme=radical&hide_border=true&bg_color=0D1117&title_color=F0A500&icon_color=F0A500&text_color=FFFFFF" width="48%"/>
-  <img src="https://github-readme-streak-stats.herokuapp.com?user=Joylan9&theme=radical&hide_border=true&background=0D1117&ring=F0A500&fire=F0A500&currStreakLabel=F0A500" width="48%"/>
-</p>
+
 
 <!-- ═══════════════════ COLLABORATORS ═══════════════════ -->
 
@@ -687,9 +684,7 @@ git push origin feature/AmazingFeature
 </tr>
 </table>
 
-<p align="center">
-  <img src="https://contrib.rocks/image?repo=Joylan9/Plumber-booking-portal&anon=0" alt="Contributors"/>
-</p>
+
 
 <img src="https://raw.githubusercontent.com/trinib/trinib/82213791fa9ff58d3ca768ddd6de2489ec23ffca/images/footer.svg" width="100%">
 

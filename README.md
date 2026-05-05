@@ -607,19 +607,25 @@ git push origin feature/AmazingFeature
 
 <img src="https://raw.githubusercontent.com/trinib/trinib/82213791fa9ff58d3ca768ddd6de2489ec23ffca/images/footer.svg" width="100%">
 
-## 👤 Author
+## 👥 Authors & Collaborators
+
+<p align="center">
+  <a href="https://git.io/typing-svg">
+    <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&size=24&duration=3000&pause=1000&color=F0A500&center=true&vCenter=true&width=600&lines=Meet+the+Team+Behind+FlowMatch+%F0%9F%9A%80;Building+the+Future+of+Plumbing+Services+%F0%9F%94%A7" alt="Team Typing SVG" />
+  </a>
+</p>
+
+<!-- ═══════════════════ LEAD DEVELOPER ═══════════════════ -->
+
+<h3 align="center">⭐ Project Lead</h3>
 
 <p align="center">
   <a href="https://github.com/Joylan9">
-    <img src="https://github.com/Joylan9.png" width="120px" style="border-radius:50%; border: 4px solid #F0A500; box-shadow: 0 10px 25px rgba(240, 165, 0, 0.4);"/>
+    <img src="https://github.com/Joylan9.png" width="140px" style="border-radius:50%; border: 4px solid #F0A500; box-shadow: 0 10px 25px rgba(240, 165, 0, 0.4);"/>
   </a>
-  <br/>
-  <br/>
+  <br/><br/>
   <strong>Joylan Dsouza</strong><br/>
-  <em>Full-Stack Developer · AI/GenAI Enthusiast</em>
-</p>
-
-<p align="center">
+  <em>Full-Stack Developer · AI/GenAI Enthusiast</em><br/><br/>
   <a href="https://www.linkedin.com/in/joylan-dsouza-31b056263">
     <img src="https://img.shields.io/badge/LinkedIn-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white"/>
   </a>
@@ -629,6 +635,60 @@ git push origin feature/AmazingFeature
   <a href="mailto:joylan928@gmail.com">
     <img src="https://img.shields.io/badge/Email-EA4335?style=for-the-badge&logo=gmail&logoColor=white"/>
   </a>
+</p>
+
+<p align="center">
+  <img src="https://github-readme-stats.vercel.app/api?username=Joylan9&show_icons=true&theme=radical&hide_border=true&bg_color=0D1117&title_color=F0A500&icon_color=F0A500&text_color=FFFFFF" width="48%"/>
+  <img src="https://github-readme-streak-stats.herokuapp.com?user=Joylan9&theme=radical&hide_border=true&background=0D1117&ring=F0A500&fire=F0A500&currStreakLabel=F0A500" width="48%"/>
+</p>
+
+<!-- ═══════════════════ COLLABORATORS ═══════════════════ -->
+
+<h3 align="center">🤝 Collaborators</h3>
+
+<table align="center">
+<tr>
+<td align="center" width="280">
+  <a href="https://github.com/VeaJovita">
+    <img src="https://github.com/VeaJovita.png" width="110px" style="border-radius:50%; border: 3px solid #00D9FF;"/><br/>
+    <sub><b>Vea Jovita Mascarenhas</b></sub>
+  </a>
+  <br/><br/>
+  <a href="https://github.com/VeaJovita">
+    <img src="https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white"/>
+  </a>
+  <br/>
+  <img src="https://img.shields.io/github/followers/VeaJovita?label=Followers&style=social"/>
+</td>
+<td align="center" width="280">
+  <a href="https://github.com/AmruteshRGowda">
+    <img src="https://github.com/AmruteshRGowda.png" width="110px" style="border-radius:50%; border: 3px solid #FF6B6B;"/><br/>
+    <sub><b>Amrutesh R Gowda</b></sub>
+  </a>
+  <br/><br/>
+  <a href="https://github.com/AmruteshRGowda">
+    <img src="https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white"/>
+  </a>
+  <br/>
+  <img src="https://img.shields.io/github/followers/AmruteshRGowda?label=Followers&style=social"/>
+</td>
+<td align="center" width="280">
+  <a href="https://github.com/sibon26">
+    <img src="https://github.com/sibon26.png" width="110px" style="border-radius:50%; border: 3px solid #88CE02;"/><br/>
+    <sub><b>Sibon Dcosta</b></sub>
+  </a>
+  <br/><br/>
+  <a href="https://github.com/sibon26">
+    <img src="https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white"/>
+  </a>
+  <br/>
+  <img src="https://img.shields.io/github/followers/sibon26?label=Followers&style=social"/>
+</td>
+</tr>
+</table>
+
+<p align="center">
+  <img src="https://contrib.rocks/image?repo=Joylan9/Plumber-booking-portal&anon=0" alt="Contributors"/>
 </p>
 
 <img src="https://raw.githubusercontent.com/trinib/trinib/82213791fa9ff58d3ca768ddd6de2489ec23ffca/images/footer.svg" width="100%">
@@ -652,7 +712,7 @@ Distributed under the MIT License. See `LICENSE` for more information.
 ---
 
 <p align="center">
-  Made with ❤️ by <a href="https://github.com/Joylan9">Joylan Dsouza</a>
+  Made with ❤️ by <a href="https://github.com/Joylan9">Joylan Dsouza</a>, <a href="https://github.com/VeaJovita">Vea Jovita</a>, <a href="https://github.com/AmruteshRGowda">Amrutesh R Gowda</a> & <a href="https://github.com/sibon26">Sibon Dcosta</a>
   &nbsp;•&nbsp;
   <a href="#top">Back to top ↑</a>
 </p>

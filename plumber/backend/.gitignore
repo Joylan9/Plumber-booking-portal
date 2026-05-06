@@ -32,3 +32,6 @@ uploads/
 # Server logs
 .server.err.log
 .server.out.log
+
+# Local database data
+.data/

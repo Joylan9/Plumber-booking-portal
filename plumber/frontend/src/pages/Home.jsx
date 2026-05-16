@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { getRecentReviews } from '../services/reviewService';
+import { getCategories } from '../services/categoryService';
 import { motion } from 'framer-motion';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -8,6 +9,50 @@ import Footer from '../components/Footer';
 import './Home.css';
 
 gsap.registerPlugin(ScrollTrigger);
+
+// Icon mapping for known category names — provides rich visual identity
+const CATEGORY_ICONS = {
+  'leak repair': (
+    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--clear-blue)" strokeWidth="1.5"><path d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0z"/></svg>
+  ),
+  'pipe installation': (
+    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--clear-blue)" strokeWidth="1.5"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
+  ),
+  'drain cleaning': (
+    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--clear-blue)" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+  ),
+  'water heater': (
+    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--clear-blue)" strokeWidth="1.5"><path d="M12 2v4M6.34 6.34l2.83 2.83M2 12h4M6.34 17.66l2.83-2.83M12 18v4M17.66 17.66l-2.83-2.83M22 12h-4M17.66 6.34l-2.83 2.83"/></svg>
+  ),
+  'toilet repair': (
+    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--clear-blue)" strokeWidth="1.5"><path d="M6 2h12v6a6 6 0 01-12 0V2z"/><path d="M6 8h12"/><path d="M10 14v4a2 2 0 002 2h0a2 2 0 002-2v-4"/></svg>
+  ),
+  'emergency': (
+    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--clear-blue)" strokeWidth="1.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+  ),
+};
+
+// Default description for categories that don't have one in the DB
+const CATEGORY_DESCRIPTIONS = {
+  'leak repair': 'Fast, reliable detection and sealing of pipe leaks minimizing structural water damage.',
+  'pipe installation': 'High-end structural pipe laying for remodels, new builds, and commercial venues.',
+  'drain cleaning': 'Advanced snake and hydro-jetting services to clear severe blockages permanently.',
+  'water heater': 'Repair, service, or install water heater systems with certified professionals.',
+  'toilet repair': 'Handle toilet leaks, clogs, flush issues, and full replacements with precision.',
+  'emergency': 'Urgent 24/7 plumbing support for burst pipes and critical system breakdowns.',
+};
+
+// Fallback generic icon for categories without a specific icon
+const DefaultServiceIcon = () => (
+  <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--clear-blue)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
+);
+
+// Hardcoded fallback services if API returns nothing
+const FALLBACK_SERVICES = [
+  { name: 'Leak Repair', description: 'Fast, reliable detection and sealing of pipe leaks minimizing structural water damage.' },
+  { name: 'Pipe Installation', description: 'High-end structural pipe laying for remodels, new builds, and commercial venues.' },
+  { name: 'Drain Cleaning', description: 'Advanced snake and hydro-jetting services to clear severe blockages permanently.' },
+];
 
 const fadeUpVariant = {
   hidden: { opacity: 0, y: 40 },
@@ -30,6 +75,7 @@ const Home = () => {
   const heroRef = useRef(null);
   const bgRef = useRef(null);
   const [dynamicReviews, setDynamicReviews] = useState([]);
+  const [serviceCategories, setServiceCategories] = useState([]);
 
   useEffect(() => {
     // Parallax logic explicitly requested
@@ -57,10 +103,32 @@ const Home = () => {
       }
     };
 
+    // Fetch service categories from API
+    const fetchCategories = async () => {
+      try {
+        const data = await getCategories();
+        const list = data.data || data || [];
+        if (Array.isArray(list) && list.length > 0) {
+          setServiceCategories(list);
+        }
+      } catch (err) {
+        console.error('Failed to fetch categories:', err);
+      }
+    };
+
     fetchReviews();
+    fetchCategories();
     const interval = setInterval(fetchReviews, 30000);
     return () => clearInterval(interval);
   }, []);
+
+  // Resolve which services to display — API categories or fallback
+  const displayServices = serviceCategories.length > 0
+    ? serviceCategories.map(cat => ({
+        name: cat.name,
+        description: cat.description || CATEGORY_DESCRIPTIONS[cat.name.toLowerCase()] || `Professional ${cat.name.toLowerCase()} services delivered by verified experts.`,
+      }))
+    : FALLBACK_SERVICES;
 
   // Split word animation generator
   const renderSplitText = (text) => {
@@ -203,27 +271,20 @@ const Home = () => {
            whileInView="visible"
            viewport={{ once: true, margin: "-80px" }}
         >
-          <motion.div className="card-panel service-card" variants={fadeUpVariant} whileHover={{ y: -6, boxShadow: "0 20px 60px rgba(0,0,0,0.12)" }}>
-             <div className="service-icon">
-               <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--clear-blue)" strokeWidth="1.5"><path d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0z"/></svg>
-             </div>
-             <h3>Leak Repair</h3>
-             <p>Fast, reliable detection and sealing of pipe leaks minimizing structural water damage.</p>
-          </motion.div>
-          <motion.div className="card-panel service-card" variants={fadeUpVariant} whileHover={{ y: -6, boxShadow: "0 20px 60px rgba(0,0,0,0.12)" }}>
-             <div className="service-icon">
-               <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--clear-blue)" strokeWidth="1.5"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
-             </div>
-             <h3>Pipe Installation</h3>
-             <p>High-end structural pipe laying for remodels, new builds, and commercial venues.</p>
-          </motion.div>
-          <motion.div className="card-panel service-card" variants={fadeUpVariant} whileHover={{ y: -6, boxShadow: "0 20px 60px rgba(0,0,0,0.12)" }}>
-             <div className="service-icon">
-               <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--clear-blue)" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
-             </div>
-             <h3>Drain Cleaning</h3>
-             <p>Advanced snake and hydro-jetting services to clear severe blockages permanently.</p>
-          </motion.div>
+          {displayServices.map((svc) => (
+            <motion.div
+              key={svc.name}
+              className="card-panel service-card"
+              variants={fadeUpVariant}
+              whileHover={{ y: -6, boxShadow: "0 20px 60px rgba(0,0,0,0.12)" }}
+            >
+              <div className="service-icon">
+                {CATEGORY_ICONS[svc.name.toLowerCase()] || <DefaultServiceIcon />}
+              </div>
+              <h3>{svc.name}</h3>
+              <p>{svc.description}</p>
+            </motion.div>
+          ))}
         </motion.div>
       </section>
 

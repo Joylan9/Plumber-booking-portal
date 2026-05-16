@@ -311,28 +311,39 @@ const Register = () => {
                   <div className="form-group">
                     <label>Services</label>
                     <div className="input-wrapper" style={{ marginBottom: '10px' }}>
-                      <select 
-                        className="premium-input animated-underline"
-                        value={selectedServiceType}
-                        onChange={(e) => {
-                          setSelectedServiceType(e.target.value);
-                          if (e.target.value !== 'Other') {
-                            setFormData({...formData, services: [e.target.value]});
-                          } else {
-                            setFormData({...formData, services: customServicesInput.split(',').map(s => s.trim()).filter(Boolean)});
+                      {categoriesLoading ? (
+                        <div style={{ padding: '10px 0', color: 'var(--steel-gray)', fontSize: '0.9rem' }}>Loading services...</div>
+                      ) : (
+                        <select 
+                          className="premium-input animated-underline"
+                          value={selectedServiceType}
+                          onChange={(e) => {
+                            setSelectedServiceType(e.target.value);
+                            if (e.target.value !== 'Other') {
+                              setFormData({...formData, services: [e.target.value]});
+                            } else {
+                              setFormData({...formData, services: customServicesInput.split(',').map(s => s.trim()).filter(Boolean)});
+                            }
+                          }}
+                          required
+                          style={{ appearance: 'auto' }}
+                        >
+                          <option value="" disabled>Select primary service</option>
+                          {serviceOptions.length > 0
+                            ? serviceOptions.map((svc) => (
+                                <option key={svc} value={svc}>{svc}</option>
+                              ))
+                            : /* Fallback if API returned no categories */
+                              ['Drain Cleaning', 'Pipe Installation', 'Water Heater Repair', 'Leak Detection', 'General Plumbing'].map((svc) => (
+                                <option key={svc} value={svc}>{svc}</option>
+                              ))
                           }
-                        }}
-                        required
-                        style={{ appearance: 'auto' }}
-                      >
-                        <option value="" disabled>Select primary service</option>
-                        <option value="Drain Cleaning">Drain Cleaning</option>
-                        <option value="Pipe Installation">Pipe Installation</option>
-                        <option value="Water Heater Repair">Water Heater Repair</option>
-                        <option value="Leak Detection">Leak Detection</option>
-                        <option value="General Plumbing">General Plumbing</option>
-                        <option value="Other">Other</option>
-                      </select>
+                          <option value="Other">Other (Custom)</option>
+                        </select>
+                      )}
+                      {categoriesError && (
+                        <span style={{ fontSize: '0.8rem', color: 'var(--amber-cta)', marginTop: '4px', display: 'block' }}>{categoriesError} — showing defaults</span>
+                      )}
                     </div>
                     {selectedServiceType === 'Other' && (
                       <div className="input-wrapper">

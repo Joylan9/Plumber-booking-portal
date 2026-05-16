@@ -4,7 +4,7 @@
 
 <p align="center">
   <a href="https://git.io/typing-svg">
-    <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&size=22&pause=1000&color=F0A500&center=true&vCenter=true&width=700&lines=%E2%9A%A1+Built+with+React+19+%2B+Vite+8;%F0%9F%94%90+JWT+Secured+REST+APIs;%F0%9F%8E%AD+Framer+Motion+%2B+GSAP+Animations;%F0%9F%93%A6+MERN+Stack+%E2%80%94+Full+Production+Grade;%F0%9F%9A%BF+Find+%E2%80%A2+Book+%E2%80%A2+Review+%E2%80%94+Trusted+Plumbers" alt="Typing SVG" />
+    <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&size=22&pause=1000&color=F0A500&center=true&vCenter=true&width=700&lines=%E2%9A%A1+Built+with+React+19+%2B+Vite+8;%F0%9F%94%90+JWT+Secured+REST+APIs;%F0%9F%8E%AD+Framer+Motion+%2B+GSAP+Animations;%F0%9F%93%A6+MERN+Stack+%E2%80%94+Full+Production+Grade;%F0%9F%92%AC+Real-Time+Chat+%2B+Read+Receipts+via+Socket.io;%F0%9F%9A%BF+Find+%E2%80%A2+Book+%E2%80%A2+Review+%E2%80%94+Trusted+Plumbers" alt="Typing SVG" />
   </a>
 </p>
 
@@ -15,6 +15,7 @@
   <img src="https://img.shields.io/badge/MongoDB-Mongoose_9-47A248?style=for-the-badge&logo=mongodb&logoColor=white"/>
   <img src="https://img.shields.io/badge/Framer_Motion-12-FF0050?style=for-the-badge&logo=framer&logoColor=white"/>
   <img src="https://img.shields.io/badge/GSAP-3.14-88CE02?style=for-the-badge&logo=greensock&logoColor=white"/>
+  <img src="https://img.shields.io/badge/Socket.io-4.x-010101?style=for-the-badge&logo=socketdotio&logoColor=white"/>
 </p>
 
 <p align="center">
@@ -54,7 +55,7 @@
 
 **FlowMatch** is a full-stack plumber booking platform built on the MERN stack that connects homeowners with verified plumbing professionals. Customers can search, filter, and book plumbers by specialty, view real-time ratings, and track booking status through a polished dashboard. Plumbers manage incoming jobs with accept/decline/complete workflows, while administrators oversee the entire ecosystem through a dedicated admin panel with user, booking, review, and category management.
 
-The frontend delivers a premium experience powered by **React 19**, **Framer Motion**, and **GSAP ScrollTrigger** — featuring cinematic page transitions, parallax hero sections, and micro-interactions throughout. The backend is a hardened **Express 5** REST API secured with JWT authentication, role-based access control, bcrypt password hashing, and SMTP-based password recovery.
+The frontend delivers a premium experience powered by **React 19**, **Framer Motion**, and **GSAP ScrollTrigger** — featuring cinematic page transitions, parallax hero sections, and micro-interactions throughout. The backend is a hardened **Express 5** REST API secured with JWT authentication, role-based access control, bcrypt password hashing, and SMTP-based password recovery. The platform features a full **real-time infrastructure** powered by **Socket.io** — including live Customer ↔ Plumber chat with WhatsApp-style read receipts, instant booking status push updates, and plumber online/offline/busy presence tracking.
 
 <p align="center">
   <img src="https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=900&q=80" width="80%" alt="FlowMatch Preview" style="border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.3)"/>
@@ -153,10 +154,31 @@ The frontend delivers a premium experience powered by **React 19**, **Framer Mot
 - Animated stat cards (Today's Jobs, Pending, Active, Completed)
 - Tabbed job filters: All · Pending · In Progress · Completed · Cancelled
 - Slide-out Job Detail Drawer with full customer info
-- Background polling every 30s for live job updates
+- Real-time booking updates via Socket.io (zero polling)
 - useMemo/useCallback optimized — zero re-render lag
 
 </td>
+<td width="50%">
+
+### 💬 Real-Time Chat & Presence (Socket.io)
+- Live Customer ↔ Plumber messaging via WebSockets
+- WhatsApp-style read receipts (✓ sent · ✓✓ read)
+- Debounced & batched read acknowledgements (400ms)
+- Typing indicators with auto-timeout
+- Glassmorphic ChatDrawer with Framer Motion animations
+- Real-time booking status push updates (replaces polling)
+- Plumber presence system: Online / Busy / Offline
+- 30-second disconnect grace period for network volatility
+- JWT-authenticated socket handshake
+- Auto-reconnect with exponential backoff
+- REST API fallback for chat history on reconnect
+
+</td>
+</tr>
+</table>
+
+<table>
+<tr>
 <td width="50%">
 
 ### 📧 Email Notifications
@@ -166,6 +188,18 @@ The frontend delivers a premium experience powered by **React 19**, **Framer Mot
 - Table-based layout — Gmail, Outlook & Apple Mail safe
 - Status-aware color badges (green / red / blue)
 - Inline styles only — no external CSS, no JS
+
+</td>
+<td width="50%">
+
+### 🔔 Real-Time Event Architecture
+- Socket.io server with JWT auth middleware
+- Room-based messaging: `booking:{id}`, `user:{id}`
+- Event-driven: `chat:send`, `chat:receive`, `chat:read`, `chat:messageStatus`
+- `booking:statusUpdate`, `booking:new` push events
+- `presence:bulk`, `presence:update` for live availability
+- Personal user rooms for targeted read-receipt delivery
+- `SocketContext.jsx` manages connection lifecycle & state sync
 
 </td>
 </tr>
@@ -226,6 +260,8 @@ The frontend delivers a premium experience powered by **React 19**, **Framer Mot
 | **Backend** | Nodemailer | 8.0 | SMTP email delivery |
 | **Backend** | CORS | 2.8 | Cross-origin resource sharing |
 | **Backend** | Dotenv | 17.4 | Environment variables |
+| **Backend** | Socket.io | 4.x | Real-time WebSocket server |
+| **Frontend** | Socket.io-client | 4.x | WebSocket client |
 | **Database** | MongoDB | 7.x | Document database |
 
 <img src="https://raw.githubusercontent.com/trinib/trinib/82213791fa9ff58d3ca768ddd6de2489ec23ffca/images/footer.svg" width="100%">
@@ -236,7 +272,7 @@ The frontend delivers a premium experience powered by **React 19**, **Framer Mot
 📦 FlowMatch
 ├── 📂 frontend/
 │   ├── 📂 src/
-│   │   ├── 📂 components/          # 15 reusable UI components
+│   │   ├── 📂 components/          # 18 reusable UI components
 │   │   │   ├── Navbar.jsx          # Scroll-aware sticky navigation
 │   │   │   ├── Footer.jsx          # Site-wide footer
 │   │   │   ├── DashboardLayout.jsx # Sidebar + content grid layout
@@ -251,7 +287,10 @@ The frontend delivers a premium experience powered by **React 19**, **Framer Mot
 │   │   │   ├── ReviewForm.jsx      # Interactive star rating form
 │   │   │   ├── EmptyState.jsx      # Friendly empty data messaging
 │   │   │   ├── ErrorState.jsx      # Error with retry action
-│   │   │   └── ErrorBoundary.jsx   # React error boundary wrapper
+│   │   │   ├── ErrorBoundary.jsx   # React error boundary wrapper
+│   │   │   ├── ChatDrawer.jsx      # Real-time chat with read receipts
+│   │   │   ├── ChatDrawer.css      # Glassmorphic chat UI styles
+│   │   │   └── OnlineIndicator.jsx # Plumber presence dot (online/busy/offline)
 │   │   ├── 📂 pages/               # 16 route-level pages
 │   │   │   ├── Home.jsx            # Hero + How It Works + Services + Dynamic Reviews
 │   │   │   ├── Login.jsx           # Split-layout authentication
@@ -280,7 +319,8 @@ The frontend delivers a premium experience powered by **React 19**, **Framer Mot
 │   │   │   ├── adminService.js     # Admin CRUD operations
 │   │   │   └── apiError.js         # Centralized error handling
 │   │   ├── 📂 context/             # React Context API
-│   │   │   └── AuthContext.jsx     # Auth state + JWT persistence
+│   │   │   ├── AuthContext.jsx     # Auth state + JWT persistence
+│   │   │   └── SocketContext.jsx   # Socket.io connection + presence + booking events
 │   │   ├── 📂 routes/              # Route protection
 │   │   │   └── ProtectedRoute.jsx  # Auth-gated route wrapper
 │   │   ├── 📂 styles/              # Design system
@@ -306,6 +346,7 @@ The frontend delivers a premium experience powered by **React 19**, **Framer Mot
 │   │   │   ├── plumberController   # Search & profile endpoints
 │   │   │   ├── reviewController.js # Create & list reviews
 │   │   │   ├── categoryController  # Category CRUD
+│   │   │   ├── chatController.js   # Chat history REST fallback
 │   │   │   ├── userController.js   # Profile & avatar management
 │   │   │   └── adminController.js  # Admin-only operations
 │   │   ├── 📂 routes/              # API route definitions
@@ -314,6 +355,7 @@ The frontend delivers a premium experience powered by **React 19**, **Framer Mot
 │   │   │   ├── plumberRoutes.js    # /api/plumbers/*
 │   │   │   ├── reviewRoutes.js     # /api/reviews/*
 │   │   │   ├── categoryRoutes.js   # /api/categories/*
+│   │   │   ├── chatRoutes.js       # /api/chat/*
 │   │   │   ├── userRoutes.js       # /api/users/*
 │   │   │   └── adminRoutes.js      # /api/admin/*
 │   │   ├── 📂 models/              # Mongoose schemas
@@ -321,6 +363,13 @@ The frontend delivers a premium experience powered by **React 19**, **Framer Mot
 │   │   │   ├── Booking.js          # Booking with status workflow
 │   │   │   ├── Review.js           # Star rating + comment model
 │   │   │   └── Category.js         # Service category model
+│   │   │   └── Message.js          # Chat message with status & read receipts
+│   │   ├── 📂 socket/              # Socket.io real-time handlers
+│   │   │   ├── index.js            # Socket server init + user room join
+│   │   │   ├── authMiddleware.js   # JWT verification for socket handshake
+│   │   │   ├── chatHandler.js      # Chat events + read receipt logic
+│   │   │   ├── bookingHandler.js   # Real-time booking status events
+│   │   │   └── presenceHandler.js  # Plumber online/offline/busy tracking
 │   │   ├── 📂 middleware/           # Express middleware
 │   │   │   ├── authMiddleware.js   # JWT verify + role authorization
 │   │   │   ├── adminMiddleware.js  # Admin-only gate
@@ -338,7 +387,7 @@ The frontend delivers a premium experience powered by **React 19**, **Framer Mot
 │   │   │   └── smokeTest.js        # API smoke test suite
 │   │   ├── 📂 config/              # Configuration
 │   │   │   └── db.js               # MongoDB connection
-│   │   └── server.js               # Express app entry point
+│   │   └── server.js               # Express app entry + Socket.io attach
 │   ├── 📂 uploads/                 # Avatar file storage
 │   ├── .env.example                # Environment variable template
 │   └── package.json                # Backend dependencies
@@ -505,6 +554,26 @@ Below are the core REST API endpoints. All protected routes require a `Bearer <J
 | `PUT`  | `/categories/:id` | ✅ JWT (Admin) | Update a category |
 | `DELETE`| `/categories/:id` | ✅ JWT (Admin) | Delete a category |
 
+### Chat (`/api/chat`)
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| `GET`  | `/:bookingId/messages` | ✅ JWT | Get chat history for a booking (REST fallback) |
+
+### Socket.io Events (Real-Time)
+| Event | Direction | Payload | Description |
+|-------|-----------|---------|-------------|
+| `chat:join` | Client → Server | `{ bookingId }` | Join a booking chat room |
+| `chat:send` | Client → Server | `{ bookingId, content }` | Send a chat message |
+| `chat:receive` | Server → Client | `{ message }` | Receive a new chat message |
+| `chat:history` | Server → Client | `{ bookingId, messages }` | Receive chat history on join |
+| `chat:typing` | Bidirectional | `{ bookingId, userName }` | Typing indicator |
+| `chat:read` | Client → Server | `{ bookingId, messageIds[] }` | Mark messages as read |
+| `chat:messageStatus` | Server → Client | `{ bookingId, messageIds[], status, readAt }` | Read receipt status update |
+| `booking:statusUpdate` | Server → Client | `{ bookingId, status }` | Real-time booking status change |
+| `booking:new` | Server → Client | `{ booking }` | New booking notification |
+| `presence:update` | Server → Client | `{ plumberId, status }` | Plumber availability change |
+| `presence:bulk` | Server → Client | `{ presenceMap }` | Bulk plumber presence data |
+
 <details>
 <summary>📥 POST /api/bookings — Example Request & Response</summary>
 
@@ -567,7 +636,11 @@ Below are the core REST API endpoints. All protected routes require a `Bearer <J
 - [x] ✅ Dynamic Client Reviews on Homepage (auto-refreshing every 30s)
 - [x] ✅ Admin Cascade Deletion (user removal purges bookings & reviews)
 - [x] ✅ Full Admin Category CRUD (create / update / delete)
-- [ ] 🔄 Real-time chat between Customer & Plumber (Socket.io)
+- [x] ✅ Real-Time Chat System (Socket.io WebSockets + REST fallback)
+- [x] ✅ WhatsApp-Style Read Receipts (✓ sent · ✓✓ read with blue ticks)
+- [x] ✅ Real-Time Booking Status Push (replaces 30s polling)
+- [x] ✅ Plumber Presence System (Online / Busy / Offline with grace period)
+- [x] ✅ Typing Indicators & Glassmorphic Chat UI
 - [ ] 🔄 Payment Gateway Integration (Stripe)
 - [ ] 🔄 Push Notifications for booking updates
 - [ ] 💡 Geolocation & Map-based Plumber Search

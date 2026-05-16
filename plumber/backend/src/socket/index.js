@@ -33,6 +33,9 @@ const initializeSocket = (httpServer, allowedOrigins = []) => {
       console.log(`[Socket.io] Connected: ${name} (${role}) — ${socket.id}`);
     }
 
+    // Join personal user room for direct events (e.g., read receipts)
+    socket.join(`user:${_id.toString()}`);
+
     // Register all event handler groups
     registerChatHandlers(io, socket);
     registerBookingHandlers(io, socket);

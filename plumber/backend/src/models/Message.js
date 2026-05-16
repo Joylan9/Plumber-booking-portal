@@ -23,6 +23,15 @@ const messageSchema = new mongoose.Schema({
     trim: true,
     maxlength: [2000, 'Message cannot exceed 2000 characters'],
   },
+  status: {
+    type: String,
+    enum: ['sent', 'read'],
+    default: 'sent',
+  },
+  deliveredAt: {
+    type: Date,
+    default: null,
+  },
   readAt: {
     type: Date,
     default: null,
@@ -31,8 +40,9 @@ const messageSchema = new mongoose.Schema({
   timestamps: true,
 });
 
-// Compound index for fast chat history queries
-messageSchema.index({ bookingId: 1, createdAt: 1 });
+// Indexes for fast history queries and unread message updates
+messageSchema.index({ bookingId: 1, createdAt: -1 });
+messageSchema.index({ bookingId: 1, status: 1 });
 
 const Message = mongoose.model('Message', messageSchema);
 

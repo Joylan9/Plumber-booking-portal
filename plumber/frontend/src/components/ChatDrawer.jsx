@@ -15,6 +15,19 @@ const TypingIndicator = ({ userName }) => (
   </div>
 );
 
+const SingleTick = () => (
+  <svg viewBox="0 0 16 15" width="16" height="15" fill="currentColor">
+    <path d="M15.01 3.316l-.478-.372a.365.365 0 0 0-.51.063L8.666 9.879a.32.32 0 0 1-.484.033l-.358-.325a.319.319 0 0 0-.484.032l-.378.483a.418.418 0 0 0 .036.541l1.32 1.266c.143.14.361.125.484-.033l6.272-8.048a.366.366 0 0 0-.064-.512zm-4.1 0l-.478-.372a.365.365 0 0 0-.51.063L4.566 9.879a.32.32 0 0 1-.484.033L1.891 7.769a.366.366 0 0 0-.515.006l-.423.433a.364.364 0 0 0 .006.514l3.258 3.185c.143.14.361.125.484-.033l6.272-8.048a.365.365 0 0 0-.063-.51z" opacity="0"/>
+    <path d="M10.91 3.316l-.478-.372a.365.365 0 0 0-.51.063L4.566 9.879a.32.32 0 0 1-.484.033L1.891 7.769a.366.366 0 0 0-.515.006l-.423.433a.364.364 0 0 0 .006.514l3.258 3.185c.143.14.361.125.484-.033l6.272-8.048a.365.365 0 0 0-.063-.51z"/>
+  </svg>
+);
+
+const DoubleTick = () => (
+  <svg viewBox="0 0 16 15" width="16" height="15" fill="currentColor">
+    <path d="M15.01 3.316l-.478-.372a.365.365 0 0 0-.51.063L8.666 9.879a.32.32 0 0 1-.484.033l-.358-.325a.319.319 0 0 0-.484.032l-.378.483a.418.418 0 0 0 .036.541l1.32 1.266c.143.14.361.125.484-.033l6.272-8.048a.366.366 0 0 0-.064-.512zm-4.1 0l-.478-.372a.365.365 0 0 0-.51.063L4.566 9.879a.32.32 0 0 1-.484.033L1.891 7.769a.366.366 0 0 0-.515.006l-.423.433a.364.364 0 0 0 .006.514l3.258 3.185c.143.14.361.125.484-.033l6.272-8.048a.365.365 0 0 0-.063-.51z"/>
+  </svg>
+);
+
 export default function ChatDrawer({ isOpen, onClose, bookingId, currentUser, otherUserName }) {
   const [messages, setMessages] = useState([]);
   const [inputValue, setInputValue] = useState('');
@@ -23,6 +36,9 @@ export default function ChatDrawer({ isOpen, onClose, bookingId, currentUser, ot
   const messagesEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
   const inputRef = useRef(null);
+  const acknowledgedMessageIdsRef = useRef(new Set());
+  const pendingReadBatchRef = useRef([]);
+  const readTimeoutRef = useRef(null);
 
   // Scroll to bottom smoothly
   const scrollToBottom = useCallback(() => {
@@ -45,21 +61,68 @@ export default function ChatDrawer({ isOpen, onClose, bookingId, currentUser, ot
     // Join the chat room
     socketService.emit('chat:join', { bookingId });
 
+    // Process incoming unread messages
+    const markAsRead = (msgList) => {
+      if (!isOpen || document.visibilityState !== 'visible' || !socketService.isConnected()) return;
+
+      const currentUserId = currentUser?._id || currentUser?.id;
+      const unreadIds = msgList
+        .filter(m => 
+          m.senderId !== currentUserId && 
+          m.status !== 'read' && 
+          !acknowledgedMessageIdsRef.current.has(m._id)
+        )
+        .map(m => m._id);
+
+      if (unreadIds.length === 0) return;
+
+      unreadIds.forEach(id => acknowledgedMessageIdsRef.current.add(id));
+      pendingReadBatchRef.current.push(...unreadIds);
+
+      // Debounce the socket emission to prevent spam
+      if (readTimeoutRef.current) clearTimeout(readTimeoutRef.current);
+      readTimeoutRef.current = setTimeout(() => {
+        const batch = [...new Set(pendingReadBatchRef.current)];
+        if (batch.length > 0) {
+          socketService.emit('chat:read', { bookingId, messageIds: batch });
+          pendingReadBatchRef.current = [];
+        }
+      }, 400);
+    };
+
     // Listen for chat history
     const handleHistory = (data) => {
       if (data.bookingId === bookingId) {
         setMessages(data.messages || []);
         setLoading(false);
         setTimeout(scrollToBottom, 100);
+        // Mark any incoming unread messages from history as read
+        markAsRead(data.messages || []);
       }
     };
 
     // Listen for new messages
     const handleReceive = (msg) => {
       if (msg.bookingId === bookingId) {
-        setMessages(prev => [...prev, msg]);
+        setMessages(prev => {
+          // Prevent duplicates on receive if we just sent it (though normally UI updates after history, 
+          // but for robustness we check if we already have it)
+          if (prev.some(m => m._id === msg._id)) return prev;
+          return [...prev, msg];
+        });
         setTypingUser(null);
         setTimeout(scrollToBottom, 50);
+        // Mark this incoming message as read
+        markAsRead([msg]);
+      }
+    };
+
+    // Listen for status updates (read receipts)
+    const handleMessageStatus = (data) => {
+      if (data.bookingId === bookingId && data.status === 'read') {
+        setMessages(prev => prev.map(m => 
+          data.messageIds.includes(m._id) ? { ...m, status: 'read', readAt: data.readAt } : m
+        ));
       }
     };
 
@@ -83,6 +146,15 @@ export default function ChatDrawer({ isOpen, onClose, bookingId, currentUser, ot
     socket.on('chat:receive', handleReceive);
     socket.on('chat:typing', handleTyping);
     socket.on('chat:error', handleError);
+    socket.on('chat:messageStatus', handleMessageStatus);
+
+    // Also listen to visibility change to mark read if they come back to the tab
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && isOpen) {
+        markAsRead(messages);
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 
     // Fallback: if history doesn't arrive via socket in 3s, use REST
     const fallbackTimer = setTimeout(async () => {
@@ -100,11 +172,14 @@ export default function ChatDrawer({ isOpen, onClose, bookingId, currentUser, ot
       socket.off('chat:receive', handleReceive);
       socket.off('chat:typing', handleTyping);
       socket.off('chat:error', handleError);
+      socket.off('chat:messageStatus', handleMessageStatus);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
       socketService.emit('chat:leave', { bookingId });
       clearTimeout(fallbackTimer);
       if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+      if (readTimeoutRef.current) clearTimeout(readTimeoutRef.current);
     };
-  }, [isOpen, bookingId]);
+  }, [isOpen, bookingId, currentUser]);
 
   // Lock body scroll when open
   useEffect(() => {
@@ -225,7 +300,14 @@ export default function ChatDrawer({ isOpen, onClose, bookingId, currentUser, ot
                         >
                           {!isOwn && <span className="bubble-sender">{msg.senderName || otherUserName}</span>}
                           <p className="bubble-content">{msg.content}</p>
-                          <span className="bubble-time">{formatTime(msg.createdAt)}</span>
+                          <span className="bubble-time">
+                            {formatTime(msg.createdAt)}
+                            {isOwn && (
+                              <span className={`msg-status-ticks ${msg.status === 'read' ? 'read' : 'sent'}`}>
+                                {msg.status === 'read' ? <DoubleTick /> : <SingleTick />}
+                              </span>
+                            )}
+                          </span>
                         </motion.div>
                       );
                     })}

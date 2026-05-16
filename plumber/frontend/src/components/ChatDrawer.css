@@ -173,10 +173,12 @@
 }
 
 .bubble-time {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 4px;
   font-size: 0.65rem;
   margin-top: 4px;
-  text-align: right;
+  justify-content: flex-end;
 }
 
 .chat-bubble.own .bubble-time {
@@ -185,6 +187,23 @@
 
 .chat-bubble.other .bubble-time {
   color: var(--muted);
+}
+
+/* Status Ticks */
+.msg-status-ticks {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 2px;
+}
+
+.msg-status-ticks svg {
+  opacity: 0.8;
+  transition: all 0.2s ease;
+}
+
+.msg-status-ticks.read svg {
+  color: #34b7f1; /* WhatsApp blue, or use var(--confirm-green) */
+  opacity: 1;
 }
 
 /* Typing Indicator */

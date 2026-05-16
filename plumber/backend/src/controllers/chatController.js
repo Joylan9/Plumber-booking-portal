@@ -31,7 +31,7 @@ const getChatHistory = async (req, res, next) => {
     const messages = await Message.find({ bookingId })
       .sort({ createdAt: 1 })
       .limit(100)
-      .select('senderId senderRole content readAt createdAt')
+      .select('senderId senderRole content status readAt deliveredAt createdAt')
       .lean();
 
     return res.status(200).json({

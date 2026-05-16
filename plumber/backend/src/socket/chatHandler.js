@@ -40,7 +40,7 @@ const registerChatHandlers = (io, socket) => {
       const messages = await Message.find({ bookingId })
         .sort({ createdAt: 1 })
         .limit(50)
-        .select('senderId senderRole content readAt createdAt')
+        .select('senderId senderRole content status readAt deliveredAt createdAt')
         .lean();
 
       socket.emit('chat:history', { bookingId, messages });
@@ -84,6 +84,7 @@ const registerChatHandlers = (io, socket) => {
         senderName: socket.user.name,
         senderRole: socket.user.role,
         content,
+        status: 'sent',
         createdAt: newMessage.createdAt,
       };
 
@@ -103,6 +104,54 @@ const registerChatHandlers = (io, socket) => {
         userName: socket.user.name,
         userId: socket.user._id,
       });
+    }
+  });
+
+  // Read receipts
+  socket.on('chat:read', async ({ bookingId, messageIds }) => {
+    try {
+      if (!bookingId || !messageIds || !Array.isArray(messageIds) || messageIds.length === 0) return;
+
+      const booking = await validateBookingAccess(socket.user._id, bookingId);
+      if (!booking) return;
+
+      const readTime = new Date();
+
+      // Only update messages where:
+      // 1. _id is in messageIds
+      // 2. status is not already 'read'
+      // 3. sender is not the current user (you can't mark your own messages as read)
+      const result = await Message.updateMany(
+        {
+          _id: { $in: messageIds },
+          bookingId,
+          status: { $ne: 'read' },
+          senderId: { $ne: socket.user._id }
+        },
+        {
+          $set: {
+            status: 'read',
+            readAt: readTime
+          }
+        }
+      );
+
+      if (result.modifiedCount > 0) {
+        // Find the sender of one of the messages to know who to notify
+        // Assuming all messages in a batch from chat:read come from the other user
+        const msg = await Message.findOne({ _id: messageIds[0] }).select('senderId');
+        if (msg) {
+          // Emit only to the original sender's personal room
+          io.to(`user:${msg.senderId.toString()}`).emit('chat:messageStatus', {
+            bookingId,
+            messageIds,
+            status: 'read',
+            readAt: readTime
+          });
+        }
+      }
+    } catch (error) {
+      console.error('[Chat] Read receipt error:', error.message);
     }
   });
 };

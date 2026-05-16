@@ -7,8 +7,8 @@ const createAdmin = async () => {
     await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/plumber_booking_portal');
     console.log('MongoDB Connected');
 
-    const adminEmail = 'admin@flowmatch.com';
-    const adminPassword = 'adminpassword123';
+    const adminEmail = 'admin@gmail.com';
+    const adminPassword = 'admin123';
 
     // Check if admin already exists
     const existingAdmin = await User.findOne({ email: adminEmail });

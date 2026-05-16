@@ -40,8 +40,8 @@ const Login = () => {
 
       if (data.success) {
         login(data.data);
-        // Morph button success before redirect could go here natively
-        setTimeout(() => navigate('/dashboard'), 600);
+        const destination = data.data?.role === 'admin' ? '/admin' : '/dashboard';
+        setTimeout(() => navigate(destination), 600);
       }
     } catch (err) {
       setError(err.message || 'Login failed');

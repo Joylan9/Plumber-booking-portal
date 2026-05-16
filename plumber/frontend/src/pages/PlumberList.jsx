@@ -4,6 +4,8 @@ import { motion } from 'framer-motion';
 import { getPlumbers } from '../services/plumberService';
 import { formatCurrency, clampRating, nameInitial } from '../utils/format';
 import { getCategories } from '../services/categoryService';
+import { useSocket } from '../context/SocketContext';
+import OnlineIndicator from '../components/OnlineIndicator';
 import SkeletonLoader from '../components/SkeletonLoader';
 import ErrorState from '../components/ErrorState';
 import EmptyState from '../components/EmptyState';
@@ -28,6 +30,7 @@ const staggerContainer = {
 
 const PlumberList = () => {
   const navigate = useNavigate();
+  const { onlinePlumbers } = useSocket();
   const [plumbers, setPlumbers] = useState([]);
   const [filtered, setFiltered] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -135,7 +138,12 @@ const PlumberList = () => {
                  style={{ cursor: 'pointer' }}
               >
                 <div className="plumber-header">
-                  <div className="avatar">{nameInitial(plumber.name)}</div>
+                  <div className="avatar" style={{ position: 'relative' }}>
+                    {nameInitial(plumber.name)}
+                    <span className="avatar-presence">
+                      <OnlineIndicator status={onlinePlumbers[plumber._id] || 'offline'} />
+                    </span>
+                  </div>
                   <div className="plumber-info">
                     <h3>{plumber.name || 'Plumber'}</h3>
                     <p className="area">

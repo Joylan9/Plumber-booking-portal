@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
+import { useSocket } from '../context/SocketContext';
 import { getMyBookings } from '../services/bookingService';
 import { formatDate, firstName } from '../utils/format';
 import DashboardLayout from '../components/DashboardLayout';
@@ -9,6 +10,7 @@ import StatusBadge from '../components/StatusBadge';
 import SkeletonLoader from '../components/SkeletonLoader';
 import ErrorState from '../components/ErrorState';
 import EmptyState from '../components/EmptyState';
+import ChatDrawer from '../components/ChatDrawer';
 import './CustomerDashboard.css';
 
 const stagger = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.08 } } };
@@ -39,12 +41,17 @@ function getGreeting() {
 
 export default function CustomerDashboard() {
   const { user } = useAuth();
+  const { onBookingUpdate, isConnected } = useSocket();
   const navigate = useNavigate();
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const fetchData = async (isBackground = false) => {
+  // Chat drawer state
+  const [chatOpen, setChatOpen] = useState(false);
+  const [chatBooking, setChatBooking] = useState(null);
+
+  const fetchData = useCallback(async (isBackground = false) => {
     if (!isBackground) setLoading(true);
     setError(null);
     try {
@@ -55,13 +62,34 @@ export default function CustomerDashboard() {
     } finally {
       if (!isBackground) setLoading(false);
     }
-  };
+  }, []);
 
+  // Initial fetch
   useEffect(() => {
     fetchData();
-    const interval = setInterval(() => fetchData(true), 30000);
-    return () => clearInterval(interval);
-  }, []);
+  }, [fetchData]);
+
+  // Real-time booking updates via Socket.io (replaces 30s polling)
+  useEffect(() => {
+    const unsubscribe = onBookingUpdate('customer-dash', (data) => {
+      setBookings(prev =>
+        prev.map(b => b._id === data.bookingId ? { ...b, status: data.status } : b)
+      );
+    });
+    return unsubscribe;
+  }, [onBookingUpdate]);
+
+  // Resync on reconnect
+  useEffect(() => {
+    if (isConnected) {
+      fetchData(true);
+    }
+  }, [isConnected, fetchData]);
+
+  const openChat = (booking) => {
+    setChatBooking(booking);
+    setChatOpen(true);
+  };
 
   const stats = {
     total: bookings.length,
@@ -131,7 +159,18 @@ export default function CustomerDashboard() {
                             <td>{formatDate(b.date)}</td>
                             <td><StatusBadge status={b.status} /></td>
                             <td>
-                              <Link to={`/bookings/${b._id}`} className="btn-outline table-action-btn">View</Link>
+                              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                                <Link to={`/bookings/${b._id}`} className="btn-outline table-action-btn">View</Link>
+                                {['pending', 'accepted'].includes(b.status) && (
+                                  <button
+                                    className="btn-outline table-action-btn"
+                                    style={{ borderColor: 'var(--confirm-green)', color: 'var(--confirm-green)', fontSize: '0.78rem', padding: '4px 10px' }}
+                                    onClick={() => openChat(b)}
+                                  >
+                                    💬 Chat
+                                  </button>
+                                )}
+                              </div>
                             </td>
                           </motion.tr>
                         ))}
@@ -153,6 +192,15 @@ export default function CustomerDashboard() {
           </>
         )}
       </div>
+
+      {/* Chat Drawer */}
+      <ChatDrawer
+        isOpen={chatOpen}
+        onClose={() => setChatOpen(false)}
+        bookingId={chatBooking?._id}
+        currentUser={user}
+        otherUserName={chatBooking?.plumberId?.name}
+      />
     </DashboardLayout>
   );
 }

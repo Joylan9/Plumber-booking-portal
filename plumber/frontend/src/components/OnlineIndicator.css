@@ -1,0 +1,86 @@
+/* ============================================ */
+/*         ONLINE INDICATOR — Presence Dot      */
+/* ============================================ */
+
+.online-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.indicator-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+  position: relative;
+  flex-shrink: 0;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.08);
+}
+
+/* Online — green with pulse */
+.online-indicator.online .indicator-dot {
+  background: #22c55e;
+}
+
+.online-indicator.online .indicator-dot::before {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  border: 2px solid #22c55e;
+  animation: presencePulse 2s ease-in-out infinite;
+}
+
+/* Busy — amber, no pulse */
+.online-indicator.busy .indicator-dot {
+  background: var(--amber-cta);
+}
+
+/* Offline — gray, no animation */
+.online-indicator.offline .indicator-dot {
+  background: #9ca3af;
+}
+
+/* Text label */
+.indicator-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.online-indicator.online .indicator-label {
+  color: #22c55e;
+}
+
+.online-indicator.busy .indicator-label {
+  color: var(--amber-cta);
+}
+
+.online-indicator.offline .indicator-label {
+  color: #9ca3af;
+}
+
+/* Pulse animation */
+@keyframes presencePulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0;
+  }
+}
+
+/* Positioned variant — use on avatar overlays */
+.avatar-presence {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+}

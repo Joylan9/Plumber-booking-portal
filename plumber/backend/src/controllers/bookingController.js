@@ -3,6 +3,8 @@ const User = require('../models/User');
 const { createHttpError } = require('../utils/httpError');
 const sendEmail = require('../utils/sendEmail');
 const { generateEmailTemplate } = require('../utils/emailTemplates');
+const { getIO } = require('../socket');
+const { emitBookingStatusUpdate, emitNewBooking } = require('../socket/bookingHandler');
 
 const BOOKING_POPULATE = [
   { path: 'customerId', select: 'name email phone area' },
@@ -124,6 +126,14 @@ const createBooking = async (req, res, next) => {
 
     const populatedBooking = await populateBooking(Booking.findById(booking._id));
 
+    // Emit real-time notification to the plumber
+    try {
+      const io = getIO();
+      if (io) emitNewBooking(io, populatedBooking);
+    } catch (socketErr) {
+      console.error('[Socket] Failed to emit new booking:', socketErr.message);
+    }
+
     return res.status(201).json({
       success: true,
       data: populatedBooking,
@@ -244,6 +254,14 @@ const updateBookingStatus = async (req, res, next) => {
 
         sendEmail({ email: customer.email, subject, html }).catch(err => console.error("Email send failed:", err));
       }
+    }
+
+    // Emit real-time status update via Socket.io
+    try {
+      const io = getIO();
+      if (io) emitBookingStatusUpdate(io, populatedBooking);
+    } catch (socketErr) {
+      console.error('[Socket] Failed to emit status update:', socketErr.message);
     }
 
     return res.status(200).json({

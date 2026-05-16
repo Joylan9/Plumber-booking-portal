@@ -14,6 +14,10 @@ const reviewRoutes = require('./routes/reviewRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
 const userRoutes = require('./routes/userRoutes');
 const adminRoutes = require('./routes/adminRoutes');
+const chatRoutes = require('./routes/chatRoutes');
+
+// Socket.io
+const { initializeSocket } = require('./socket');
 
 // Load env vars
 dotenv.config();
@@ -53,6 +57,7 @@ app.use('/api/reviews', reviewRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/chat', chatRoutes);
 
 // Root route
 app.get('/', (req, res) => {
@@ -74,13 +79,16 @@ const startServer = async () => {
     }
   });
 
-  // 2. Attempt to connect to the database asynchronously
+  // 2. Initialize Socket.io on the HTTP server
+  const allowedOriginsArray = Array.from(allowedOriginsSet);
+  initializeSocket(server, allowedOriginsArray);
+
+  // 3. Attempt to connect to the database asynchronously
   try {
     await connectDB();
   } catch (error) {
     console.error(`[Server] Failed to connect to database during startup: ${error.message}`);
     console.warn(`[Server] Warning: API is running but database is unreachable.`);
-    // We intentionally DO NOT process.exit(1) here so the server remains up
   }
 };
 

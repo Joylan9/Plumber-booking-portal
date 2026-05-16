@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { SocketProvider } from './context/SocketContext';
 import ErrorBoundary from './components/ErrorBoundary';
 import Navbar from './components/Navbar';
 import ToastContainer from './components/Toast';
@@ -110,17 +111,19 @@ const AnimatedRoutes = () => {
 function App() {
   return (
     <AuthProvider>
-      <ErrorBoundary>
-        <Router>
-          <div className="app-container">
-            <Navbar />
-            <main>
-              <AnimatedRoutes />
-            </main>
-          </div>
-          <ToastContainer />
-        </Router>
-      </ErrorBoundary>
+      <SocketProvider>
+        <ErrorBoundary>
+          <Router>
+            <div className="app-container">
+              <Navbar />
+              <main>
+                <AnimatedRoutes />
+              </main>
+            </div>
+            <ToastContainer />
+          </Router>
+        </ErrorBoundary>
+      </SocketProvider>
     </AuthProvider>
   );
 }

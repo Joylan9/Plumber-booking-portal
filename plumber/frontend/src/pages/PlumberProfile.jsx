@@ -4,7 +4,9 @@ import { motion } from 'framer-motion';
 import { getPlumberById } from '../services/plumberService';
 import { getPlumberReviews } from '../services/reviewService';
 import { formatCurrency, clampRating, nameInitial, firstName } from '../utils/format';
+import { useSocket } from '../context/SocketContext';
 import ReviewCard from '../components/ReviewCard';
+import OnlineIndicator from '../components/OnlineIndicator';
 import SkeletonLoader from '../components/SkeletonLoader';
 import ErrorState from '../components/ErrorState';
 import EmptyState from '../components/EmptyState';
@@ -29,6 +31,7 @@ function StarDisplay({ rating, count }) {
 export default function PlumberProfile() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { onlinePlumbers } = useSocket();
   const [plumber, setPlumber] = useState(null);
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -84,7 +87,12 @@ export default function PlumberProfile() {
   return (
     <div className="pp-container">
       <motion.div className="card-panel pp-hero" initial="hidden" animate="visible" variants={fadeUp} transition={{ duration: 0.5 }}>
-        <div className="pp-avatar">{nameInitial(plumber.name)}</div>
+        <div className="pp-avatar" style={{ position: 'relative' }}>
+          {nameInitial(plumber.name)}
+          <span className="avatar-presence">
+            <OnlineIndicator status={onlinePlumbers[plumber._id] || 'offline'} />
+          </span>
+        </div>
         <div className="pp-info">
           <h1 className="pp-name">{plumber.name || 'Plumber'}</h1>
           <p className="pp-area">{plumber.area || 'Remote Service'}</p>

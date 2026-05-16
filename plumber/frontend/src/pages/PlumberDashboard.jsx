@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
+import { useSocket } from '../context/SocketContext';
 import { getMyBookings, updateBookingStatus } from '../services/bookingService';
 import { formatDate, firstName, clampRating, formatCurrency } from '../utils/format';
 import PlumberLayout from '../components/PlumberLayout';
@@ -9,6 +10,7 @@ import ConfirmModal from '../components/ConfirmModal';
 import SkeletonLoader from '../components/SkeletonLoader';
 import ErrorState from '../components/ErrorState';
 import EmptyState from '../components/EmptyState';
+import ChatDrawer from '../components/ChatDrawer';
 import { toast } from '../components/Toast';
 import BookingMap from '../components/BookingMap';
 import './PlumberDashboard.css';
@@ -48,6 +50,7 @@ function AnimatedCounter({ value }) {
 
 export default function PlumberDashboard() {
   const { user } = useAuth();
+  const { onBookingUpdate, isConnected } = useSocket();
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -56,6 +59,10 @@ export default function PlumberDashboard() {
   const [activeTab, setActiveTab] = useState('All');
   const [selectedJob, setSelectedJob] = useState(null); // Controls Job Detail Drawer
   const [modal, setModal] = useState({ open: false, id: null, action: '' });
+
+  // Chat drawer state
+  const [chatOpen, setChatOpen] = useState(false);
+  const [chatBooking, setChatBooking] = useState(null);
 
   const fetchData = useCallback(async (isBackground = false) => {
     if (!isBackground) setLoading(true);
@@ -72,9 +79,27 @@ export default function PlumberDashboard() {
 
   useEffect(() => {
     fetchData();
-    const interval = setInterval(() => fetchData(true), 30000); // Polling every 30s
-    return () => clearInterval(interval);
   }, [fetchData]);
+
+  // Real-time booking updates via Socket.io (replaces 30s polling)
+  useEffect(() => {
+    const unsubscribe = onBookingUpdate('plumber-dash', (data) => {
+      setBookings(prev =>
+        prev.map(b => b._id === data.bookingId ? { ...b, status: data.status } : b)
+      );
+      if (selectedJob && selectedJob._id === data.bookingId) {
+        setSelectedJob(prev => ({ ...prev, status: data.status }));
+      }
+    });
+    return unsubscribe;
+  }, [onBookingUpdate, selectedJob]);
+
+  // Resync on reconnect
+  useEffect(() => {
+    if (isConnected) {
+      fetchData(true);
+    }
+  }, [isConnected, fetchData]);
 
   // Lock background scroll when drawer is open
   useEffect(() => {
@@ -139,6 +164,12 @@ export default function PlumberDashboard() {
       );
     }
     return null;
+  };
+
+  const openChat = (b, e) => {
+    if (e) e.stopPropagation();
+    setChatBooking(b);
+    setChatOpen(true);
   };
 
   return (
@@ -227,7 +258,12 @@ export default function PlumberDashboard() {
                         
                         {/* Footer / Actions */}
                         <div className="pl-jc-footer">
-                          <button className="pl-btn-text" onClick={(e) => { e.stopPropagation(); setSelectedJob(b); }}>View Details →</button>
+                          <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                            <button className="pl-btn-text" onClick={(e) => { e.stopPropagation(); setSelectedJob(b); }}>View Details →</button>
+                            {['pending', 'accepted'].includes(b.status) && (
+                              <button className="pl-btn-text" style={{ color: 'var(--confirm-green)' }} onClick={(e) => openChat(b, e)}>💬 Chat</button>
+                            )}
+                          </div>
                           {getActionButtons(b)}
                         </div>
                       </motion.div>
@@ -365,6 +401,15 @@ export default function PlumberDashboard() {
           danger={modal.action === 'cancelled'}
           onConfirm={handleAction}
           onCancel={() => setModal({ open: false, id: null, action: '' })}
+        />
+
+        {/* Chat Drawer */}
+        <ChatDrawer
+          isOpen={chatOpen}
+          onClose={() => setChatOpen(false)}
+          bookingId={chatBooking?._id}
+          currentUser={user}
+          otherUserName={chatBooking?.customerId?.name}
         />
       </div>
     </PlumberLayout>

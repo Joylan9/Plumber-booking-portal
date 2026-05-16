@@ -1,4 +1,5 @@
 import { createContext, useState, useEffect, useContext, useMemo } from 'react';
+import socketService from '../services/socketService';
 
 export const AuthContext = createContext();
 
@@ -47,6 +48,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
+    socketService.disconnect();
     localStorage.removeItem('user');
     setUser(null);
     window.location.href = '/login';

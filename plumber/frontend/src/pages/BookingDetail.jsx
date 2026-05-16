@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
+import { useSocket } from '../context/SocketContext';
 import { getBookingById, updateBookingStatus } from '../services/bookingService';
 import { formatDate, normalizeStatus } from '../utils/format';
 import StatusBadge from '../components/StatusBadge';
@@ -10,6 +11,7 @@ import ConfirmModal from '../components/ConfirmModal';
 import SkeletonLoader from '../components/SkeletonLoader';
 import ErrorState from '../components/ErrorState';
 import EmptyState from '../components/EmptyState';
+import ChatDrawer from '../components/ChatDrawer';
 import { toast } from '../components/Toast';
 import './BookingDetail.css';
 
@@ -48,11 +50,13 @@ export default function BookingDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user, isPlumber } = useAuth();
+  const { onBookingUpdate } = useSocket();
   const [booking, setBooking] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [modal, setModal] = useState({ open: false, action: '' });
   const [reviewDone, setReviewDone] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
 
   const fetchBooking = async () => {
     setLoading(true);
@@ -76,6 +80,16 @@ export default function BookingDetail() {
     if (!id) { navigate('/dashboard', { replace: true }); return; }
     fetchBooking();
   }, [id]);
+
+  // Real-time status updates for THIS booking
+  useEffect(() => {
+    const unsubscribe = onBookingUpdate(`booking-detail-${id}`, (data) => {
+      if (data.bookingId === id) {
+        setBooking(prev => prev ? { ...prev, status: data.status } : prev);
+      }
+    });
+    return unsubscribe;
+  }, [id, onBookingUpdate]);
 
   const handleAction = async () => {
     const { action } = modal;
@@ -154,6 +168,15 @@ export default function BookingDetail() {
             <button className="btn-primary bd-action-btn" onClick={() => setModal({ open: true, action: 'completed' })}>Mark Complete</button>
           </div>
         )}
+
+        {/* Chat Button */}
+        {['pending', 'accepted'].includes(status) && (
+          <div className="bd-actions" style={{ marginTop: '8px' }}>
+            <button className="btn-outline bd-action-btn" onClick={() => setChatOpen(true)} style={{ borderColor: 'var(--confirm-green)', color: 'var(--confirm-green)' }}>
+              💬 Chat with {isPlumber ? 'Customer' : 'Plumber'}
+            </button>
+          </div>
+        )}
       </motion.div>
 
       {/* Review form — only visible to customer after completion */}
@@ -169,6 +192,15 @@ export default function BookingDetail() {
         danger={modal.action === 'cancelled'}
         onConfirm={handleAction}
         onCancel={() => setModal({ open: false, action: '' })}
+      />
+
+      {/* Chat Drawer */}
+      <ChatDrawer
+        isOpen={chatOpen}
+        onClose={() => setChatOpen(false)}
+        bookingId={booking?._id}
+        currentUser={user}
+        otherUserName={isPlumber ? booking?.customerId?.name : booking?.plumberId?.name}
       />
     </div>
   );

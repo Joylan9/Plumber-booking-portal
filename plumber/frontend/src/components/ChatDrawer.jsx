@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import socketService from '../services/socketService';
 import { getChatHistory } from '../services/chatService';
+import ConfirmModal from './ConfirmModal';
 import './ChatDrawer.css';
 
 const TypingIndicator = ({ userName }) => (
@@ -28,11 +29,75 @@ const DoubleTick = () => (
   </svg>
 );
 
+/* ── Deleted message placeholder bubble ──────────────── */
+const DeletedBubble = ({ isOwn }) => (
+  <div className={`chat-bubble deleted ${isOwn ? 'own' : 'other'}`}>
+    <p className="bubble-content bubble-deleted-text">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>
+      </svg>
+      This message was deleted
+    </p>
+  </div>
+);
+
+/* ── Message context menu ────────────────────────────── */
+const MessageActionMenu = ({ isOwn, onDeleteForMe, onDeleteForEveryone, onClose }) => (
+  <motion.div
+    className="msg-action-menu"
+    initial={{ opacity: 0, scale: 0.85, y: -4 }}
+    animate={{ opacity: 1, scale: 1, y: 0 }}
+    exit={{ opacity: 0, scale: 0.85, y: -4 }}
+    transition={{ duration: 0.15 }}
+    onClick={(e) => e.stopPropagation()}
+  >
+    <button className="msg-action-item" onClick={onDeleteForMe}>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
+      </svg>
+      Delete for me
+    </button>
+    {isOwn && (
+      <button className="msg-action-item msg-action-danger" onClick={onDeleteForEveryone}>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/>
+        </svg>
+        Delete for everyone
+      </button>
+    )}
+  </motion.div>
+);
+
+/* ── Header kebab menu ───────────────────────────────── */
+const HeaderMenu = ({ onClearChat, onClose }) => (
+  <motion.div
+    className="chat-header-dropdown"
+    initial={{ opacity: 0, scale: 0.9, y: -8 }}
+    animate={{ opacity: 1, scale: 1, y: 0 }}
+    exit={{ opacity: 0, scale: 0.9, y: -8 }}
+    transition={{ duration: 0.15 }}
+    onClick={(e) => e.stopPropagation()}
+  >
+    <button className="header-menu-item" onClick={onClearChat}>
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
+      </svg>
+      Clear chat
+    </button>
+  </motion.div>
+);
+
 export default function ChatDrawer({ isOpen, onClose, bookingId, currentUser, otherUserName }) {
   const [messages, setMessages] = useState([]);
   const [inputValue, setInputValue] = useState('');
   const [loading, setLoading] = useState(true);
   const [typingUser, setTypingUser] = useState(null);
+
+  // Menu & modal state
+  const [activeMenuMsgId, setActiveMenuMsgId] = useState(null);
+  const [headerMenuOpen, setHeaderMenuOpen] = useState(false);
+  const [confirmModal, setConfirmModal] = useState({ open: false, type: null, messageId: null });
+
   const messagesEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
   const inputRef = useRef(null);
@@ -40,10 +105,23 @@ export default function ChatDrawer({ isOpen, onClose, bookingId, currentUser, ot
   const pendingReadBatchRef = useRef([]);
   const readTimeoutRef = useRef(null);
 
+  const currentUserId = currentUser?._id || currentUser?.id;
+
   // Scroll to bottom smoothly
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, []);
+
+  // Close all menus when clicking anywhere
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleClick = () => {
+      setActiveMenuMsgId(null);
+      setHeaderMenuOpen(false);
+    };
+    document.addEventListener('click', handleClick);
+    return () => document.removeEventListener('click', handleClick);
+  }, [isOpen]);
 
   // Join chat room and load history
   useEffect(() => {
@@ -65,11 +143,11 @@ export default function ChatDrawer({ isOpen, onClose, bookingId, currentUser, ot
     const markAsRead = (msgList) => {
       if (!isOpen || document.visibilityState !== 'visible' || !socketService.isConnected()) return;
 
-      const currentUserId = currentUser?._id || currentUser?.id;
       const unreadIds = msgList
-        .filter(m => 
-          m.senderId !== currentUserId && 
-          m.status !== 'read' && 
+        .filter(m =>
+          m.senderId !== currentUserId &&
+          m.status !== 'read' &&
+          !m._isDeletedPlaceholder &&
           !acknowledgedMessageIdsRef.current.has(m._id)
         )
         .map(m => m._id);
@@ -79,7 +157,6 @@ export default function ChatDrawer({ isOpen, onClose, bookingId, currentUser, ot
       unreadIds.forEach(id => acknowledgedMessageIdsRef.current.add(id));
       pendingReadBatchRef.current.push(...unreadIds);
 
-      // Debounce the socket emission to prevent spam
       if (readTimeoutRef.current) clearTimeout(readTimeoutRef.current);
       readTimeoutRef.current = setTimeout(() => {
         const batch = [...new Set(pendingReadBatchRef.current)];
@@ -96,7 +173,6 @@ export default function ChatDrawer({ isOpen, onClose, bookingId, currentUser, ot
         setMessages(data.messages || []);
         setLoading(false);
         setTimeout(scrollToBottom, 100);
-        // Mark any incoming unread messages from history as read
         markAsRead(data.messages || []);
       }
     };
@@ -105,14 +181,11 @@ export default function ChatDrawer({ isOpen, onClose, bookingId, currentUser, ot
     const handleReceive = (msg) => {
       if (msg.bookingId === bookingId) {
         setMessages(prev => {
-          // Prevent duplicates on receive if we just sent it (though normally UI updates after history, 
-          // but for robustness we check if we already have it)
           if (prev.some(m => m._id === msg._id)) return prev;
           return [...prev, msg];
         });
         setTypingUser(null);
         setTimeout(scrollToBottom, 50);
-        // Mark this incoming message as read
         markAsRead([msg]);
       }
     };
@@ -120,7 +193,7 @@ export default function ChatDrawer({ isOpen, onClose, bookingId, currentUser, ot
     // Listen for status updates (read receipts)
     const handleMessageStatus = (data) => {
       if (data.bookingId === bookingId && data.status === 'read') {
-        setMessages(prev => prev.map(m => 
+        setMessages(prev => prev.map(m =>
           data.messageIds.includes(m._id) ? { ...m, status: 'read', readAt: data.readAt } : m
         ));
       }
@@ -128,11 +201,35 @@ export default function ChatDrawer({ isOpen, onClose, bookingId, currentUser, ot
 
     // Listen for typing
     const handleTyping = (data) => {
-      if (data.bookingId === bookingId && data.userId !== currentUser?._id) {
+      if (data.bookingId === bookingId && data.userId !== currentUserId) {
         setTypingUser(data.userName);
-        // Clear typing after 3 seconds
         if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
         typingTimeoutRef.current = setTimeout(() => setTypingUser(null), 3000);
+      }
+    };
+
+    // Listen for "deleted for everyone" (real-time broadcast)
+    const handleDeletedForEveryone = (data) => {
+      if (data.bookingId === bookingId) {
+        setMessages(prev => prev.map(m =>
+          m._id === data.messageId
+            ? { ...m, content: null, _isDeletedPlaceholder: true, isDeletedForEveryone: true }
+            : m
+        ));
+      }
+    };
+
+    // Listen for "deleted for me" confirmation
+    const handleDeletedForMe = (data) => {
+      if (data.bookingId === bookingId) {
+        setMessages(prev => prev.filter(m => m._id !== data.messageId));
+      }
+    };
+
+    // Listen for "chat cleared" confirmation
+    const handleChatCleared = (data) => {
+      if (data.bookingId === bookingId) {
+        setMessages([]);
       }
     };
 
@@ -147,8 +244,11 @@ export default function ChatDrawer({ isOpen, onClose, bookingId, currentUser, ot
     socket.on('chat:typing', handleTyping);
     socket.on('chat:error', handleError);
     socket.on('chat:messageStatus', handleMessageStatus);
+    socket.on('chat:messageDeletedForEveryone', handleDeletedForEveryone);
+    socket.on('chat:messageDeletedForMe', handleDeletedForMe);
+    socket.on('chat:chatCleared', handleChatCleared);
 
-    // Also listen to visibility change to mark read if they come back to the tab
+    // Visibility change handler
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible' && isOpen) {
         markAsRead(messages);
@@ -173,6 +273,9 @@ export default function ChatDrawer({ isOpen, onClose, bookingId, currentUser, ot
       socket.off('chat:typing', handleTyping);
       socket.off('chat:error', handleError);
       socket.off('chat:messageStatus', handleMessageStatus);
+      socket.off('chat:messageDeletedForEveryone', handleDeletedForEveryone);
+      socket.off('chat:messageDeletedForMe', handleDeletedForMe);
+      socket.off('chat:chatCleared', handleChatCleared);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       socketService.emit('chat:leave', { bookingId });
       clearTimeout(fallbackTimer);
@@ -192,10 +295,11 @@ export default function ChatDrawer({ isOpen, onClose, bookingId, currentUser, ot
     return () => { document.body.style.overflow = ''; };
   }, [isOpen]);
 
+  // ── Action Handlers ───────────────────────────────────
+
   const handleSend = () => {
     const trimmed = inputValue.trim();
     if (!trimmed || !bookingId) return;
-
     socketService.emit('chat:send', { bookingId, message: trimmed });
     setInputValue('');
   };
@@ -205,10 +309,43 @@ export default function ChatDrawer({ isOpen, onClose, bookingId, currentUser, ot
       e.preventDefault();
       handleSend();
     } else {
-      // Emit typing indicator (throttled by the server)
       socketService.emit('chat:typing', { bookingId });
     }
   };
+
+  const openDeleteModal = (type, messageId) => {
+    setActiveMenuMsgId(null);
+    setConfirmModal({ open: true, type, messageId });
+  };
+
+  const handleConfirmAction = () => {
+    const { type, messageId } = confirmModal;
+
+    if (type === 'deleteForMe' && messageId) {
+      // Optimistic: remove from local state immediately
+      setMessages(prev => prev.filter(m => m._id !== messageId));
+      socketService.emit('chat:deleteForMe', { bookingId, messageId });
+    } else if (type === 'deleteForEveryone' && messageId) {
+      // Optimistic: replace with placeholder
+      setMessages(prev => prev.map(m =>
+        m._id === messageId
+          ? { ...m, content: null, _isDeletedPlaceholder: true, isDeletedForEveryone: true }
+          : m
+      ));
+      socketService.emit('chat:deleteForEveryone', { bookingId, messageId });
+    } else if (type === 'clearChat') {
+      setMessages([]);
+      socketService.emit('chat:clearChat', { bookingId });
+    }
+
+    setConfirmModal({ open: false, type: null, messageId: null });
+  };
+
+  const handleCancelAction = () => {
+    setConfirmModal({ open: false, type: null, messageId: null });
+  };
+
+  // ── Helpers ───────────────────────────────────────────
 
   const formatTime = (dateStr) => {
     const d = new Date(dateStr);
@@ -223,6 +360,20 @@ export default function ChatDrawer({ isOpen, onClose, bookingId, currentUser, ot
     yesterday.setDate(yesterday.getDate() - 1);
     if (d.toDateString() === yesterday.toDateString()) return 'Yesterday';
     return d.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
+  };
+
+  const getConfirmModalProps = () => {
+    const { type } = confirmModal;
+    if (type === 'deleteForMe') {
+      return { title: 'Delete Message', message: 'Delete this message for you? This action cannot be undone.', confirmLabel: 'Delete for Me', danger: true };
+    }
+    if (type === 'deleteForEveryone') {
+      return { title: 'Delete for Everyone', message: 'This message will be removed for both you and the other participant. This cannot be undone.', confirmLabel: 'Delete for Everyone', danger: true };
+    }
+    if (type === 'clearChat') {
+      return { title: 'Clear Chat', message: 'Clear all messages from this chat? The other participant will still see their copy. This cannot be undone.', confirmLabel: 'Clear Chat', danger: true };
+    }
+    return {};
   };
 
   // Group messages by date
@@ -260,9 +411,32 @@ export default function ChatDrawer({ isOpen, onClose, bookingId, currentUser, ot
                   <span className="chat-header-sub">Booking Chat</span>
                 </div>
               </div>
-              <button className="chat-close-btn" onClick={onClose}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-              </button>
+              <div className="chat-header-actions">
+                {/* Kebab menu button */}
+                <div className="chat-kebab-wrap">
+                  <button
+                    className="chat-kebab-btn"
+                    onClick={(e) => { e.stopPropagation(); setHeaderMenuOpen(prev => !prev); }}
+                    title="More options"
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                      <circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/>
+                    </svg>
+                  </button>
+                  <AnimatePresence>
+                    {headerMenuOpen && (
+                      <HeaderMenu
+                        onClearChat={() => { setHeaderMenuOpen(false); openDeleteModal('clearChat', null); }}
+                        onClose={() => setHeaderMenuOpen(false)}
+                      />
+                    )}
+                  </AnimatePresence>
+                </div>
+                {/* Close button */}
+                <button className="chat-close-btn" onClick={onClose}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+              </div>
             </div>
 
             {/* Messages */}
@@ -289,25 +463,66 @@ export default function ChatDrawer({ isOpen, onClose, bookingId, currentUser, ot
                       <span>{formatDateSeparator(msgs[0].createdAt)}</span>
                     </div>
                     {msgs.map((msg) => {
-                      const isOwn = msg.senderId === currentUser?._id || msg.senderId === currentUser?.id;
+                      const isOwn = msg.senderId === currentUserId;
+                      const isDeleted = msg._isDeletedPlaceholder || msg.isDeletedForEveryone;
+
+                      if (isDeleted) {
+                        return (
+                          <motion.div
+                            key={msg._id || msg.createdAt}
+                            initial={{ opacity: 0, y: 8 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.2 }}
+                          >
+                            <DeletedBubble isOwn={isOwn} />
+                          </motion.div>
+                        );
+                      }
+
                       return (
                         <motion.div
                           key={msg._id || msg.createdAt}
-                          className={`chat-bubble ${isOwn ? 'own' : 'other'}`}
+                          className={`chat-bubble-wrap ${isOwn ? 'own' : 'other'}`}
                           initial={{ opacity: 0, y: 8, scale: 0.95 }}
                           animate={{ opacity: 1, y: 0, scale: 1 }}
                           transition={{ duration: 0.2 }}
                         >
-                          {!isOwn && <span className="bubble-sender">{msg.senderName || otherUserName}</span>}
-                          <p className="bubble-content">{msg.content}</p>
-                          <span className="bubble-time">
-                            {formatTime(msg.createdAt)}
-                            {isOwn && (
-                              <span className={`msg-status-ticks ${msg.status === 'read' ? 'read' : 'sent'}`}>
-                                {msg.status === 'read' ? <DoubleTick /> : <SingleTick />}
-                              </span>
+                          <div className={`chat-bubble ${isOwn ? 'own' : 'other'}`}>
+                            {!isOwn && <span className="bubble-sender">{msg.senderName || otherUserName}</span>}
+                            <p className="bubble-content">{msg.content}</p>
+                            <span className="bubble-time">
+                              {formatTime(msg.createdAt)}
+                              {isOwn && (
+                                <span className={`msg-status-ticks ${msg.status === 'read' ? 'read' : 'sent'}`}>
+                                  {msg.status === 'read' ? <DoubleTick /> : <SingleTick />}
+                                </span>
+                              )}
+                            </span>
+                          </div>
+
+                          {/* Chevron trigger for action menu */}
+                          <button
+                            className="msg-menu-trigger"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setActiveMenuMsgId(prev => prev === msg._id ? null : msg._id);
+                            }}
+                            title="Message options"
+                          >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg>
+                          </button>
+
+                          {/* Context menu */}
+                          <AnimatePresence>
+                            {activeMenuMsgId === msg._id && (
+                              <MessageActionMenu
+                                isOwn={isOwn}
+                                onDeleteForMe={() => openDeleteModal('deleteForMe', msg._id)}
+                                onDeleteForEveryone={() => openDeleteModal('deleteForEveryone', msg._id)}
+                                onClose={() => setActiveMenuMsgId(null)}
+                              />
                             )}
-                          </span>
+                          </AnimatePresence>
                         </motion.div>
                       );
                     })}
@@ -342,6 +557,14 @@ export default function ChatDrawer({ isOpen, onClose, bookingId, currentUser, ot
               </button>
             </div>
           </motion.div>
+
+          {/* Confirmation Modal */}
+          <ConfirmModal
+            isOpen={confirmModal.open}
+            onConfirm={handleConfirmAction}
+            onCancel={handleCancelAction}
+            {...getConfirmModalProps()}
+          />
         </>
       )}
     </AnimatePresence>

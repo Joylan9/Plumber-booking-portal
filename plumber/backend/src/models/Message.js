@@ -36,6 +36,22 @@ const messageSchema = new mongoose.Schema({
     type: Date,
     default: null,
   },
+  // ── Soft-delete fields ────────────────────────────────
+  // True when the sender deletes the message for everyone
+  isDeletedForEveryone: {
+    type: Boolean,
+    default: false,
+  },
+  // Array of user IDs who individually deleted this message ("delete for me")
+  deletedForUsers: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+  }],
+  // Timestamp of the most recent delete action
+  deletedAt: {
+    type: Date,
+    default: null,
+  },
 }, {
   timestamps: true,
 });

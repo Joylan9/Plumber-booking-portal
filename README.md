@@ -166,6 +166,14 @@ The frontend delivers a premium experience powered by **React 19**, **Framer Mot
 - Debounced & batched read acknowledgements (400ms)
 - Typing indicators with auto-timeout
 - Glassmorphic ChatDrawer with Framer Motion animations
+- **WhatsApp-style message deletion:**
+  - "Delete for Me" — hides message from your view only
+  - "Delete for Everyone" — replaces with "🚫 This message was deleted" placeholder for all participants
+  - Sender-only authorization for delete-for-everyone
+- **Clear Chat** — per-user chat clearing (other participant's history unaffected)
+- Contextual message action menus (hover/tap chevron trigger)
+- Confirmation modals for all destructive actions
+- Soft-delete architecture — audit-safe, no permanent DB removal
 - Real-time booking status push updates (replaces polling)
 - Plumber presence system: Online / Busy / Offline
 - 30-second disconnect grace period for network volatility
@@ -196,6 +204,8 @@ The frontend delivers a premium experience powered by **React 19**, **Framer Mot
 - Socket.io server with JWT auth middleware
 - Room-based messaging: `booking:{id}`, `user:{id}`
 - Event-driven: `chat:send`, `chat:receive`, `chat:read`, `chat:messageStatus`
+- `chat:deleteForMe`, `chat:deleteForEveryone`, `chat:clearChat` events
+- `chat:messageDeletedForEveryone` broadcast to all room participants
 - `booking:statusUpdate`, `booking:new` push events
 - `presence:bulk`, `presence:update` for live availability
 - Personal user rooms for targeted read-receipt delivery
@@ -288,8 +298,8 @@ The frontend delivers a premium experience powered by **React 19**, **Framer Mot
 │   │   │   ├── EmptyState.jsx      # Friendly empty data messaging
 │   │   │   ├── ErrorState.jsx      # Error with retry action
 │   │   │   ├── ErrorBoundary.jsx   # React error boundary wrapper
-│   │   │   ├── ChatDrawer.jsx      # Real-time chat with read receipts
-│   │   │   ├── ChatDrawer.css      # Glassmorphic chat UI styles
+│   │   │   ├── ChatDrawer.jsx      # Real-time chat + delete/clear management
+│   │   │   ├── ChatDrawer.css      # Glassmorphic chat UI + action menu styles
 │   │   │   └── OnlineIndicator.jsx # Plumber presence dot (online/busy/offline)
 │   │   ├── 📂 pages/               # 16 route-level pages
 │   │   │   ├── Home.jsx            # Hero + How It Works + Services + Dynamic Reviews
@@ -346,7 +356,7 @@ The frontend delivers a premium experience powered by **React 19**, **Framer Mot
 │   │   │   ├── plumberController   # Search & profile endpoints
 │   │   │   ├── reviewController.js # Create & list reviews
 │   │   │   ├── categoryController  # Category CRUD
-│   │   │   ├── chatController.js   # Chat history REST fallback
+│   │   │   ├── chatController.js   # Chat history + delete + clear APIs
 │   │   │   ├── userController.js   # Profile & avatar management
 │   │   │   └── adminController.js  # Admin-only operations
 │   │   ├── 📂 routes/              # API route definitions
@@ -362,12 +372,13 @@ The frontend delivers a premium experience powered by **React 19**, **Framer Mot
 │   │   │   ├── User.js             # Customer/Plumber/Admin model
 │   │   │   ├── Booking.js          # Booking with status workflow
 │   │   │   ├── Review.js           # Star rating + comment model
-│   │   │   └── Category.js         # Service category model
-│   │   │   └── Message.js          # Chat message with status & read receipts
+│   │   │   ├── Category.js         # Service category model
+│   │   │   ├── Message.js          # Chat message with soft-delete & read receipts
+│   │   │   └── ChatClear.js        # Per-user chat clear timestamps
 │   │   ├── 📂 socket/              # Socket.io real-time handlers
 │   │   │   ├── index.js            # Socket server init + user room join
 │   │   │   ├── authMiddleware.js   # JWT verification for socket handshake
-│   │   │   ├── chatHandler.js      # Chat events + read receipt logic
+│   │   │   ├── chatHandler.js      # Chat events + read receipts + delete/clear
 │   │   │   ├── bookingHandler.js   # Real-time booking status events
 │   │   │   └── presenceHandler.js  # Plumber online/offline/busy tracking
 │   │   ├── 📂 middleware/           # Express middleware
@@ -557,7 +568,10 @@ Below are the core REST API endpoints. All protected routes require a `Bearer <J
 ### Chat (`/api/chat`)
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
-| `GET`  | `/:bookingId/messages` | ✅ JWT | Get chat history for a booking (REST fallback) |
+| `GET`  | `/:bookingId` | ✅ JWT | Get chat history (filters deleted/cleared messages) |
+| `DELETE` | `/:bookingId/messages/:messageId` | ✅ JWT | Delete a message for current user only |
+| `DELETE` | `/:bookingId/messages/:messageId/everyone` | ✅ JWT (Sender) | Delete a message for all participants |
+| `POST` | `/:bookingId/clear` | ✅ JWT | Clear entire chat for current user |
 
 ### Socket.io Events (Real-Time)
 | Event | Direction | Payload | Description |
@@ -569,6 +583,12 @@ Below are the core REST API endpoints. All protected routes require a `Bearer <J
 | `chat:typing` | Bidirectional | `{ bookingId, userName }` | Typing indicator |
 | `chat:read` | Client → Server | `{ bookingId, messageIds[] }` | Mark messages as read |
 | `chat:messageStatus` | Server → Client | `{ bookingId, messageIds[], status, readAt }` | Read receipt status update |
+| `chat:deleteForMe` | Client → Server | `{ bookingId, messageId }` | Delete a message for current user |
+| `chat:messageDeletedForMe` | Server → Client | `{ bookingId, messageId }` | Confirm message deleted for caller |
+| `chat:deleteForEveryone` | Client → Server | `{ bookingId, messageId }` | Delete a message for all participants |
+| `chat:messageDeletedForEveryone` | Server → Room | `{ bookingId, messageId }` | Broadcast deletion to entire chat room |
+| `chat:clearChat` | Client → Server | `{ bookingId }` | Clear all chat for current user |
+| `chat:chatCleared` | Server → Client | `{ bookingId, clearedAt }` | Confirm chat cleared for caller |
 | `booking:statusUpdate` | Server → Client | `{ bookingId, status }` | Real-time booking status change |
 | `booking:new` | Server → Client | `{ booking }` | New booking notification |
 | `presence:update` | Server → Client | `{ plumberId, status }` | Plumber availability change |
@@ -641,6 +661,8 @@ Below are the core REST API endpoints. All protected routes require a `Bearer <J
 - [x] ✅ Real-Time Booking Status Push (replaces 30s polling)
 - [x] ✅ Plumber Presence System (Online / Busy / Offline with grace period)
 - [x] ✅ Typing Indicators & Glassmorphic Chat UI
+- [x] ✅ WhatsApp-Style Message Deletion (Delete for Me / Delete for Everyone)
+- [x] ✅ Clear Chat (per-user, audit-safe soft-delete architecture)
 - [ ] 🔄 Payment Gateway Integration (Stripe)
 - [ ] 🔄 Push Notifications for booking updates
 - [ ] 💡 Geolocation & Map-based Plumber Search
